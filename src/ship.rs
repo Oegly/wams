@@ -94,7 +94,6 @@ impl Ship {
         let av = self.vector;
 
         let collision_rad = f64::atan2(dx, dy);
-        let collision_deg = collision_rad.to_degrees();
         let perpendicular = collision_rad + FRAC_PI_2;
         let degree_delta = perpendicular - av.direction;
 

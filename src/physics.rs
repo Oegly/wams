@@ -48,7 +48,6 @@ pub struct Circle {
     x: f64,
     y: f64,
     r: f64,
-    vector: Vector,
 }
 
 impl Circle {
@@ -57,7 +56,6 @@ impl Circle {
             x: x,
             y: y,
             r: r,
-            vector: Vector::new(),
         }
     }
 
@@ -73,29 +71,9 @@ impl Circle {
         self.r
     }
 
-    pub fn get_vector(&self) -> Vector {
-        self.vector
-    }
-
     pub fn move_by(&mut self, x: f64, y: f64) {
         self.x += x;
         self.y += y;
-    }
-
-    pub fn set_vector(&mut self, vector: Vector) {
-        self.vector = vector;
-    }
-
-    pub fn add_vector(&mut self, vector: Vector) {
-        self.vector.add_vector(vector);
-    }
-
-    pub fn get_dx(&self) -> f64 {
-        self.vector.get_dx()
-    }
-
-    pub fn get_dy(&self) -> f64 {
-        self.vector.get_dy()
     }
 
     pub fn check_collision_circle(&self, circle: &Circle) -> bool {
@@ -110,15 +88,6 @@ impl Circle {
 
         false
 
-    }
-
-    pub fn thrust(&mut self, v: Vector) {
-        self.vector.add_vector(v);
-    }
-
-    pub fn abide_physics(&mut self, time_delta: f64) {
-        self.x += self.vector.get_dx() * time_delta;
-        self.y += self.vector.get_dy() * time_delta;
     }
 }
 
