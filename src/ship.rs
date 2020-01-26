@@ -76,40 +76,17 @@ impl Ship {
     }
 
     pub fn collision_bounce(&mut self, ship: &ShipCache) {
-        // TODO: Clean this method up!
-        // Doing some work already done in Circle::check_collision_circle.
-        // Could it be optimised without convoluting the code?
-        let (ax, ay, ar, ad) = (self.circle.get_x(), self.circle.get_y(), self.circle.get_r(),
-                                self.vector.direction.to_radians());
-        let (bx, by, br, bd) = (ship.circle.get_x(), ship.circle.get_y(), ship.circle.get_r(),
-                                ship.vector.direction.to_radians());
-
-        let dx = ax - bx;
-        let dy = ay - by;
-
-        // Find point of impact
-        let px = ((ax * ar) + (bx * br)) / (ar + br);
-        let py = ((ay * ar) + (by * br)) / (ar + br);
-
-        let av = self.vector;
-
-        let collision_rad = f64::atan2(dx, dy);
-        let perpendicular = collision_rad + FRAC_PI_2;
-        let degree_delta = perpendicular - av.direction;
+        let dx = ship.circle.get_x() - self.circle.get_x();
+        let dy = ship.circle.get_y() - self.circle.get_y();
 
         // Move out of the other ship before changing trajectory
-        let overlap = ar + br - dx.hypot(dy);
-        let correction_vector = Vector {direction: av.direction + PI, magnitude: overlap};
-        let (mx, my) = (correction_vector.get_dx(), correction_vector.get_dy());
-        self.circle.move_by(mx, my);
+        self.circle.move_by_vector(Vector {
+            direction: self.vector.direction + PI,
+            magnitude: self.circle.get_r() + ship.circle.get_r() - dx.hypot(dy)
+        });
 
-        //println!("{:.2} - {:.2} = {:.2}", collision_deg, av.direction, collision_deg - av.direction);
-        //println!("Met #{:}. {:.2} != {:.2} Overlap: {:.2}. Moving by {:.2}, {:.2}", ship.id, dx.hypot(dy), ar + br, overlap, mx, my);
-
-        self.vector = Vector {
-            direction: (av.direction + degree_delta * 2.0) % TAU,
-            magnitude: av.magnitude,
-        };
+        // Change trajectory according to the angle of the collision
+        self.vector.rotate(f64::atan2(dx, dy) + FRAC_PI_2);
     }
 
     pub fn act_player(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) {

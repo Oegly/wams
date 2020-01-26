@@ -1,3 +1,7 @@
+use std::f64::consts::{PI,FRAC_PI_2};
+
+const TAU: f64 = PI * 2.0;
+
 #[derive(Clone,Copy,Debug)]
 pub struct Vector {
     pub direction: f64,
@@ -41,6 +45,12 @@ impl Vector {
         self.direction = _x.atan2(_y);
         self.magnitude = _x.hypot(_y);
     }
+
+    pub fn rotate(&mut self, angle: f64) {
+        let delta = angle - self.direction;
+
+        self.direction = (self.direction + delta * 2.0) % TAU;
+    }
 }
 
 #[derive(Clone,Copy,Debug)]
@@ -74,6 +84,11 @@ impl Circle {
     pub fn move_by(&mut self, x: f64, y: f64) {
         self.x += x;
         self.y += y;
+    }
+
+    pub fn move_by_vector(&mut self, v: Vector) {
+        self.x += v.get_dx();
+        self.y += v.get_dy();
     }
 
     pub fn check_collision_circle(&self, circle: &Circle) -> bool {
