@@ -4,6 +4,7 @@ use crate::physics::*;
 #[derive(Debug)]
 pub struct Ship {
     id: u32,
+    vector: Vector,
     circle: Circle,
     direction: f64,
     color: [f32; 4],
@@ -13,6 +14,7 @@ impl Ship {
     pub fn new(x: f64, y: f64) -> Ship {
         Ship {
             id: 0,
+            vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: 180.0,
             color: [0.8, 0.4, 0.4, 1.0],
@@ -22,6 +24,7 @@ impl Ship {
     pub fn new_r(x: f64, y: f64, r: f64) -> Ship {
         Ship {
             id: 0,
+            vector: Vector::empty(),
             circle: Circle::new(x, y, r),
             direction: 180.0,
             color: [0.8, 0.4, 0.4, 1.0],
@@ -46,14 +49,19 @@ impl Ship {
     }
 
     pub fn thrust(&mut self, m: f64) {
-        self.circle.thrust(Vector {
-            direction: self.direction,
-            magnitude: m
-        });
+        self.vector.add_vector(
+            Vector {
+                direction: self.direction,
+                magnitude: m
+            });
     }
 
     pub fn abide_physics(&mut self, time_delta: f64) {
-        self.circle.abide_physics(time_delta);
+        //self.circle.abide_physics(time_delta);
+        self.circle.move_by(
+            self.vector.get_dx() * time_delta,
+            self.vector.get_dy() * time_delta
+        );
     }
 
     pub fn rotate(&mut self, d: f64) {
@@ -69,9 +77,9 @@ impl Ship {
         // Doing some work already done in Circle::check_collision_circle.
         // Could it be optimised without convoluting the code?
         let (ax, ay, ar, ad) = (self.circle.get_x(), self.circle.get_y(), self.circle.get_r(),
-                                self.circle.get_vector().direction.to_radians());
+                                self.vector.direction.to_radians());
         let (bx, by, br, bd) = (ship.circle.get_x(), ship.circle.get_y(), ship.circle.get_r(),
-                                ship.circle.get_vector().direction.to_radians());
+                                ship.vector.direction.to_radians());
 
         let dx = ax - bx;
         let dy = ay - by;
@@ -80,7 +88,7 @@ impl Ship {
         let px = ((ax * ar) + (bx * br)) / (ar + br);
         let py = ((ay * ar) + (by * br)) / (ar + br);
 
-        let av = self.circle.get_vector();
+        let av = self.vector;
 
         let collision_rad = f64::atan2(dx, dy);
         let collision_deg = collision_rad.to_degrees();
@@ -96,10 +104,10 @@ impl Ship {
         //println!("{:.2} - {:.2} = {:.2}", collision_deg, av.direction, collision_deg - av.direction);
         //println!("Met #{:}. {:.2} != {:.2} Overlap: {:.2}. Moving by {:.2}, {:.2}", ship.id, dx.hypot(dy), ar + br, overlap, mx, my);
 
-        self.circle.set_vector(Vector {
+        self.vector = Vector {
             direction: (av.direction + degree_delta * 2.0) % 360.0,
             magnitude: av.magnitude,
-        });
+        };
     }
 
     pub fn act_player(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) {
@@ -152,6 +160,7 @@ impl Ship {
     pub fn get_cache(&self) -> ShipCache {
         ShipCache {
             id: self.id,
+            vector: self.vector,
             circle: self.circle,
             direction: self.direction,
             color: self.color,
@@ -175,6 +184,7 @@ impl ShipFactory {
 
         Ship {
             id: self.count,
+            vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: 180.0,
             color: [0.8, 0.4, 0.4, 1.0],
@@ -188,6 +198,7 @@ impl ShipFactory {
 
         Ship {
             id: self.count,
+            vector: cache.vector,
             circle: cache.circle,
             direction: cache.direction,
             color: cache.color,
@@ -197,6 +208,7 @@ impl ShipFactory {
 
 pub struct ShipCache {
     pub id: u32,
+    pub vector: Vector,
     pub circle: Circle,
     pub direction: f64,
     pub color: [f32; 4],

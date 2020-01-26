@@ -5,6 +5,13 @@ pub struct Vector {
 }
 
 impl Vector {
+    pub fn empty() -> Vector {
+        Vector {
+            direction: 0.0,
+            magnitude: 0.0,
+        }
+    }
+
     pub fn new() -> Vector {
         Vector {
             direction: 0.0,
