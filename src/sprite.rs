@@ -25,7 +25,7 @@ impl ShipSprite {
             let transform = c
                 .transform
                 .trans(_x, _y)
-                .rot_deg(-_d)
+                .rot_rad(-_d)
                 .scale(_r, _r);
 
             graphics::polygon(wing_color, &nozzle, transform, gl);

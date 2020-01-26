@@ -1,5 +1,8 @@
 use crate::broadcast::Broadcast;
 use crate::physics::*;
+use std::f64::consts::{PI,FRAC_PI_2};
+
+const TAU: f64 = PI * 2.0;
 
 #[derive(Debug)]
 pub struct Ship {
@@ -65,10 +68,10 @@ impl Ship {
     }
 
     pub fn rotate(&mut self, d: f64) {
-        self.direction = (self.direction + d) % 360.0;
+        self.direction = (self.direction + d) % TAU;
 
         if (self.direction > 0.0) {
-            self.direction += 360.0;
+            self.direction += TAU;
         }
     }
 
@@ -92,12 +95,12 @@ impl Ship {
 
         let collision_rad = f64::atan2(dx, dy);
         let collision_deg = collision_rad.to_degrees();
-        let perpendicular = collision_deg + 90.0;
+        let perpendicular = collision_rad + FRAC_PI_2;
         let degree_delta = perpendicular - av.direction;
 
         // Move out of the other ship before changing trajectory
         let overlap = ar + br - dx.hypot(dy);
-        let correction_vector = Vector {direction: av.direction + 180.0, magnitude: overlap};
+        let correction_vector = Vector {direction: av.direction + PI, magnitude: overlap};
         let (mx, my) = (correction_vector.get_dx(), correction_vector.get_dy());
         self.circle.move_by(mx, my);
 
@@ -105,7 +108,7 @@ impl Ship {
         //println!("Met #{:}. {:.2} != {:.2} Overlap: {:.2}. Moving by {:.2}, {:.2}", ship.id, dx.hypot(dy), ar + br, overlap, mx, my);
 
         self.vector = Vector {
-            direction: (av.direction + degree_delta * 2.0) % 360.0,
+            direction: (av.direction + degree_delta * 2.0) % TAU,
             magnitude: av.magnitude,
         };
     }
@@ -117,15 +120,15 @@ impl Ship {
             let dx = self.get_x() - cast.cursor.0;
             let dy = self.get_y() - cast.cursor.1;
 
-            self.direction = f64::atan2(-dx, -dy).to_degrees();
+            self.direction = f64::atan2(-dx, -dy);
             self.thrust(80.0 * time_delta);
         }
         else {
             if pressed.contains(&'L') {
-                self.rotate(360.0 * time_delta);
+                self.rotate(TAU * time_delta);
             }
             if pressed.contains(&'R') {
-                self.rotate(-360.0 * time_delta);
+                self.rotate(-TAU * time_delta);
             }
             if pressed.contains(&'T') {
                 self.thrust(80.0 * time_delta);
@@ -153,7 +156,7 @@ impl Ship {
     }
 
     pub fn act_npc(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) {
-        //self.rotate(180.0 * time_delta);
+        //self.rotate(PI * time_delta);
         self.abide_physics(time_delta);
     }
 
@@ -186,7 +189,7 @@ impl ShipFactory {
             id: self.count,
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
-            direction: 180.0,
+            direction: PI,
             color: [0.8, 0.4, 0.4, 1.0],
         }
     }
