@@ -1,69 +1,82 @@
+#![allow(unused)]
+
 extern crate glutin_window;
 extern crate graphics;
 extern crate opengl_graphics;
 extern crate piston;
 
+mod physics;
 mod ship;
+mod sprite;
 mod broadcast;
 
+use std::cell::RefCell;
 use piston::window::WindowSettings;
 use piston::event_loop::*;
 use piston::input::*;
 use glutin_window::GlutinWindow;
 use opengl_graphics::{GlGraphics, OpenGL};
 
-use ship::Ship;
-use broadcast::Broadcast;
+use ship::*;
+use broadcast::*;
+
+const BG_COLOR: [f32; 4] = [0.6, 0.6, 0.8, 1.0];
+const UPS: u64 = 60;
 
 pub struct Game {
-    gl: GlGraphics,
+    tick: u64,
+    gl: RefCell<GlGraphics>,
     player: Ship,
+    mobs: Vec<Ship>,
+    cached_actors: Vec<ShipCache>,
     broadcast: Broadcast,
     pressed: Vec<char>,
 }
 
 impl Game {
     fn update(&mut self, args: &UpdateArgs) -> bool {
+        self.tick += 1;
+
+        // Flush cache
+        self.cached_actors = Vec::new();
+
+        // Cache player
+        self.cached_actors.push(self.player.get_cache());
+
+        /*
+        if self.tick % 60 == 0 {
+            println!("{:.2} {:.2} {:.2} {:.2}",
+                     self.cached_actors[0].circle.get_x(),
+                     self.cached_actors[0].circle.get_y(),
+                     self.cached_actors[0].direction,
+                     self.cached_actors[0].circle.get_vector().magnitude);
+        }*/
+
+        // Cache non-player characters
+        for mob in self.mobs.iter() {
+            self.cached_actors.push(mob.get_cache());
+        }
+
         //self.player.add_inputs(self.broadcast.input.to_vec());
-        self.player.act_player(1.0/30.0, &self.broadcast);
+        self.player.act_player(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
+
+        for mob in self.mobs.iter_mut() {
+            mob.act_npc(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
+        }
 
         true
     }
 
     fn render(&mut self, args: &RenderArgs) {
-        use graphics;
-
-        //println!("{:?}", args.draw_width, args.draw_height);
-
-        const BG_COLOR: [f32; 4] = [0.6, 0.6, 0.8, 1.0];
-
-        let [_sx, _sy, _sd] = self.player.render_piston();
-
-        self.gl.draw(args.viewport(), |c, gl| {
+        self.gl.borrow_mut().draw(args.viewport(), |c, gl| {
             graphics::clear(BG_COLOR, gl);
-
-            graphics::ellipse(
-                [0.8, 0.4, 0.4, 1.0],
-                [_sx - 18.0, _sy - 18.0, 36.0, 36.0],
-                c.transform,
-                gl
-            );
-
-            if _sx == 1.0 || _sy != 1.0 {
-                graphics::line(
-                    [0.2, 0.2, 0.2, 1.0],
-                    1.0,
-                    [
-                        _sx,
-                        _sy,
-                        _sx + _sd.to_radians().sin() * 18.0,
-                        _sy + _sd.to_radians().cos() * 18.0
-                    ],
-                    c.transform,
-                    gl
-                );
-            }
         });
+
+        let _c = self.player.get_cache();
+
+        for ship in self.cached_actors.iter() {
+            sprite::ShipSprite::draw(&mut self.gl.borrow_mut(), args, &ship)
+        }
     }
 
     fn pressed(&mut self, btn: &Button) {
@@ -73,10 +86,15 @@ impl Game {
             &Button::Keyboard(Key::Up) => self.broadcast.press('T'),
             &Button::Keyboard(Key::Left) => self.broadcast.press('L'),
             &Button::Keyboard(Key::Right) => self.broadcast.press('R'),
+            &Button::Mouse(MouseButton::Left) => self.broadcast.press('M'),
             _ => (),
         }
 
         self.pressed = pressed;
+    }
+
+    fn cursor_moved(&mut self, x: f64, y: f64) {
+        self.broadcast.move_cursor(x, y);
     }
 
     fn released(&mut self, btn: &Button) {
@@ -84,6 +102,7 @@ impl Game {
             &Button::Keyboard(Key::Up) => self.broadcast.release('T'),
             &Button::Keyboard(Key::Left) => self.broadcast.release('L'),
             &Button::Keyboard(Key::Right) => self.broadcast.release('R'),
+            &Button::Mouse(MouseButton::Left) => self.broadcast.release('M'),
             _ => (),
         }
     }
@@ -93,20 +112,33 @@ fn main() {
     // Change this to OpenGL::V2_1 if this fails.
     let opengl = OpenGL::V3_2;
 
-    let mut window: GlutinWindow = WindowSettings::new("Snake Game", [1200, 800])
+    let mut window: GlutinWindow = WindowSettings::new("Snake Game", [600, 400])
         .opengl(opengl)
         .exit_on_esc(true)
         .build()
         .unwrap();
 
+    let mut factory = ShipFactory::new();
+    let player = factory.new_ship(240.0, 240.0);
+    let mut mobs: Vec<Ship> = Vec::new();
+
+
+    for i in 0..5 {
+        mobs.push(factory.new_ship(120.0 + 60.0 * i as f64, 40.0));
+        mobs.push(factory.new_ship(120.0 + 60.0 * i as f64, 360.0));
+    }
+
     let mut game = Game {
-        gl: GlGraphics::new(opengl),
-        player: Ship::new(240.0, 240.0),
+        tick: 0,
+        gl: RefCell::new(GlGraphics::new(opengl)),
+        player: player,
+        mobs: mobs,
+        cached_actors: Vec::new(),
         broadcast: Broadcast::new(),
         pressed: Vec::new(),
     };
 
-    let mut events = Events::new(EventSettings::new()).ups(60);
+    let mut events = Events::new(EventSettings::new()).ups(UPS);
     while let Some(e) = events.next(&mut window) {
         //println!("{:?}", e);
         if let Some(r) = e.render_args() {
@@ -127,7 +159,12 @@ fn main() {
                 game.released(&k.button);
             }
         }
+
+        if let Some(pos) = e.mouse_cursor_args() {
+            game.broadcast.move_cursor(pos[0], pos[1]);
+        }
+
     }
 
-    println!("Thank you for playing!\nYour snek managed to eat 0 foods.");
+    println!("Thank you for playing!");
 }
