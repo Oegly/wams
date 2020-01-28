@@ -1,3 +1,4 @@
+
 use crate::broadcast::Broadcast;
 use crate::physics::*;
 use std::f64::consts::{PI,FRAC_PI_2};
@@ -59,6 +60,27 @@ impl Ship {
             });
     }
 
+    pub fn brake(&mut self, time_delta: f64) {
+        if (self.vector.magnitude == 0.0) {
+            return;
+        }
+
+        // Get in position. First find the opposite angle.
+        self.direction = (self.vector.direction + PI) % TAU;
+
+        // Are we in position?
+        if (self.direction % TAU == (self.vector.direction + PI) % TAU) {
+            // Reduce speed each tick until we reach 0.0
+            self.vector.magnitude = (self.vector.magnitude - 80.0 * time_delta).max(0.0);
+        }
+
+        /*
+        let radian_delta: f64 = goal - self.direction;
+        self.direction += radian_delta.abs().min(TAU * time_delta) * (radian_delta - PI).signum();
+        self.direction %= TAU;
+         */
+    }
+
     pub fn abide_physics(&mut self, time_delta: f64) {
         //self.circle.abide_physics(time_delta);
         self.circle.move_by(
@@ -108,6 +130,9 @@ impl Ship {
             }
             if pressed.contains(&'T') {
                 self.thrust(80.0 * time_delta);
+            }
+            if pressed.contains(&'B') {
+                self.brake(time_delta);
             }
         }
 

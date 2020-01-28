@@ -84,6 +84,7 @@ impl Game {
 
         match btn {
             &Button::Keyboard(Key::Up) => self.broadcast.press('T'),
+            &Button::Keyboard(Key::Down) => self.broadcast.press('B'),
             &Button::Keyboard(Key::Left) => self.broadcast.press('L'),
             &Button::Keyboard(Key::Right) => self.broadcast.press('R'),
             &Button::Mouse(MouseButton::Left) => self.broadcast.press('M'),
@@ -100,6 +101,7 @@ impl Game {
     fn released(&mut self, btn: &Button) {
         match btn {
             &Button::Keyboard(Key::Up) => self.broadcast.release('T'),
+            &Button::Keyboard(Key::Down) => self.broadcast.release('B'),
             &Button::Keyboard(Key::Left) => self.broadcast.release('L'),
             &Button::Keyboard(Key::Right) => self.broadcast.release('R'),
             &Button::Mouse(MouseButton::Left) => self.broadcast.release('M'),
@@ -112,20 +114,20 @@ fn main() {
     // Change this to OpenGL::V2_1 if this fails.
     let opengl = OpenGL::V3_2;
 
-    let mut window: GlutinWindow = WindowSettings::new("Snake Game", [600, 400])
+    let mut window: GlutinWindow = WindowSettings::new("Snake Game", [1920, 1000])
         .opengl(opengl)
         .exit_on_esc(true)
         .build()
         .unwrap();
 
     let mut factory = ShipFactory::new();
-    let player = factory.new_ship(240.0, 240.0);
+    let player = factory.new_ship(800.0, 500.0);
     let mut mobs: Vec<Ship> = Vec::new();
 
 
-    for i in 0..5 {
-        mobs.push(factory.new_ship(120.0 + 60.0 * i as f64, 40.0));
-        mobs.push(factory.new_ship(120.0 + 60.0 * i as f64, 360.0));
+    for i in 0..8 {
+        mobs.push(factory.new_ship(480.0 + 80.0 * i as f64, 200.0));
+        mobs.push(factory.new_ship(480.0 + 80.0 * i as f64, 800.0));
     }
 
     let mut game = Game {
