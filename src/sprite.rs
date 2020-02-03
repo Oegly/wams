@@ -32,6 +32,8 @@ impl ShipSprite {
             graphics::polygon(wing_color, &wing, transform, gl);
             graphics::polygon(wing_color, &wing, transform.flip_h(), gl);
             graphics::ellipse(ship_color, body, c.transform, gl);
+
+            graphics::rectangle([1.0, 1.0, 1.0, 0.4], ship.trajectory.render_piston(), c.transform, gl);
         });
     }
 }

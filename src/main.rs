@@ -7,6 +7,7 @@ extern crate piston;
 
 mod physics;
 mod ship;
+mod shape;
 mod sprite;
 mod broadcast;
 
@@ -56,6 +57,8 @@ impl Game {
         for mob in self.mobs.iter() {
             self.cached_actors.push(mob.get_cache());
         }
+
+        self.broadcast.record_actors(&self.cached_actors, Some(0));
 
         //self.player.add_inputs(self.broadcast.input.to_vec());
         self.player.act_player(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
@@ -114,20 +117,20 @@ fn main() {
     // Change this to OpenGL::V2_1 if this fails.
     let opengl = OpenGL::V3_2;
 
-    let mut window: GlutinWindow = WindowSettings::new("Snake Game", [1920, 1000])
+    let mut window: GlutinWindow = WindowSettings::new("Well-Adjusted, Mature Spaceships", [1024, 768])
         .opengl(opengl)
         .exit_on_esc(true)
         .build()
         .unwrap();
 
     let mut factory = ShipFactory::new();
-    let player = factory.new_ship(800.0, 500.0);
+    let player = factory.new_ship(400.0, 350.0);
     let mut mobs: Vec<Ship> = Vec::new();
 
 
     for i in 0..8 {
-        mobs.push(factory.new_ship(480.0 + 80.0 * i as f64, 200.0));
-        mobs.push(factory.new_ship(480.0 + 80.0 * i as f64, 800.0));
+        mobs.push(factory.new_ship(80.0 + 80.0 * i as f64, 100.0));
+        mobs.push(factory.new_ship(80.0 + 80.0 * i as f64, 600.0));
     }
 
     let mut game = Game {

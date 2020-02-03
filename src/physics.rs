@@ -16,10 +16,10 @@ impl Vector {
         }
     }
 
-    pub fn new() -> Vector {
+    pub fn new(d: f64, m: f64) -> Vector {
         Vector {
-            direction: 0.0,
-            magnitude: 0.0,
+            direction: d,
+            magnitude: m,
         }
     }
 
@@ -46,71 +46,57 @@ impl Vector {
         self.magnitude = _x.hypot(_y);
     }
 
+    pub fn subtract_vector(&mut self, v: Vector) {
+        let _x: f64 = self.get_dx() - v.get_dx();
+        let _y: f64 = self.get_dy() - v.get_dy();
+
+        self.direction = _x.atan2(_y);
+        self.magnitude = _x.hypot(_y);
+    }
+
     pub fn rotate(&mut self, angle: f64) {
         let delta = angle - self.direction;
 
         self.direction = (self.direction + delta * 2.0) % TAU;
     }
-}
 
-#[derive(Clone,Copy,Debug)]
-pub struct Circle {
-    x: f64,
-    y: f64,
-    r: f64,
-}
+    pub fn radian_delta(&self, mut r: f64) -> f64{
+        r %= TAU;
 
-impl Circle {
-    pub fn new(x: f64, y: f64, r: f64) -> Circle {
-        Circle {
-            x: x,
-            y: y,
-            r: r,
-        }
-    }
-
-    pub fn get_x(&self) -> f64 {
-        self.x
-    }
-
-    pub fn get_y(&self) -> f64{
-        self.y
-    }
-
-    pub fn get_r(&self) -> f64 {
-        self.r
-    }
-
-    pub fn move_by(&mut self, x: f64, y: f64) {
-        self.x += x;
-        self.y += y;
-    }
-
-    pub fn move_by_vector(&mut self, v: Vector) {
-        self.x += v.get_dx();
-        self.y += v.get_dy();
-    }
-
-    pub fn check_collision_circle(&self, circle: &Circle) -> bool {
-        let dx = self.x - circle.get_x();
-        let dy = self.y - circle.get_y();
-
-        let distance = dx.hypot(dy);
-
-        if distance < self.r + circle.get_r() {
-            return true;
+        if self.direction > r {
+            if self.direction - r >= PI {
+                return TAU + r - self.direction;
+            }
         }
 
-        false
+        if r - self.direction > PI {
+            return (TAU - r) * -1.0 - self.direction
+        }
 
+        r - self.direction
     }
 }
-
 
 #[cfg(test)]
 mod tests {
+    use std::f64::consts::{PI,FRAC_PI_2};
+    use crate::physics::*;
+
+    const TAU: f64 = PI * 2.0;
+
     #[test]
-    fn works() {
-        assert_eq!(true, true);
+    fn test_radian_delta() {
+        let v1 = Vector::new(FRAC_PI_2, 0.0);
+        let v2 = Vector::new(FRAC_PI_2 * 3.0, 0.0);
+
+        assert_eq!(v1.radian_delta(PI), FRAC_PI_2);
+        assert_eq!(v1.radian_delta(1.0), 1.0 - FRAC_PI_2);
+        assert_eq!(v1.radian_delta(6.0), 6.0 - TAU - FRAC_PI_2);
+        assert_eq!(v2.radian_delta(6.0), 6.0 - FRAC_PI_2 * 3.0);
+        assert_eq!(v2.radian_delta(4.0), 4.0 - FRAC_PI_2 * 3.0);
+        assert_eq!(v2.radian_delta(1.0), TAU - FRAC_PI_2 * 3.0 + 1.0);
+
+        assert_eq!(v1.radian_delta(v2.direction), PI);
+        assert_eq!(v2.radian_delta(v1.direction), PI);
     }
 }
