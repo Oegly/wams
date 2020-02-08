@@ -1,3 +1,4 @@
+
 use crate::broadcast::Broadcast;
 use crate::physics::*;
 use crate::shape::*;
@@ -219,6 +220,15 @@ impl Ship {
     }
 }
 
+impl std::fmt::Display for Ship {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Ship #{} at x: {:.2}, y: {:.2}), facing {:.2}. Moving at {:.2} {:.2}",
+               self.id, self.circle.get_x(), self.circle.get_y(), self.direction,
+               self.vector.direction, self.vector.magnitude
+        )
+    }
+}
+
 pub struct ShipFactory {
     count: u32,
 }
@@ -289,12 +299,52 @@ impl ShipCache {
     }
 }
 
-/*
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn works() {
-        assert_eq!(true, true);
+impl std::fmt::Display for ShipCache {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Ship #{} at x: {:.2}, y: {:.2}), facing {:.2}. Moving at {:.2} {:.2}",
+               self.id, self.circle.get_x(), self.circle.get_y(), self.direction,
+               self.vector.direction, self.vector.magnitude
+        )
     }
 }
-*/
+
+#[cfg(test)]
+mod tests {
+    use crate::ship::*;
+    use crate::physics::*;
+
+    fn collide(a: Vector, b: Vector) {
+        let mut a = Ship {
+            id: 0,
+            vector: a,
+            circle: Circle::new(0.0, 0.0, 18.0),
+            direction: PI,
+            color: [0.8, 0.4, 0.4, 1.0],
+        };
+
+        let mut b = Ship {
+            id: 1,
+            vector: b,
+            circle: Circle::new(90.0, 0.0, 18.0),
+            direction: PI,
+            color: [0.8, 0.4, 0.4, 1.0],
+        };
+
+        let cast = Broadcast::new();
+
+        for i in 0..2 {
+            let actors = vec![a.get_cache(), b.get_cache()];
+
+            a.act_player(1.0, &cast, &actors);
+            b.act_player(1.0, &cast, &actors);
+        }
+
+        println!("{:}\n{:}", a, b)
+    }
+
+    #[test]
+    fn cases() {
+        println!("Case #1: Moving and still ship:");
+        collide(Vector::new(std::f64::consts::FRAC_PI_2, 90.0), Vector::empty());
+    }
+}
