@@ -1,4 +1,3 @@
-
 use crate::broadcast::Broadcast;
 use crate::physics::*;
 use crate::shape::*;
@@ -7,7 +6,7 @@ use std::f64::consts::{PI,FRAC_PI_2};
 
 const TAU: f64 = PI * 2.0;
 
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub struct Ship {
     id: u32,
     vector: Vector,
@@ -57,7 +56,7 @@ impl Ship {
             self.circle.right() + (self.vector.get_dx() * time_delta).max(0.0),
             self.circle.bottom() + (self.vector.get_dy() * time_delta).max(0.0),
             self.circle.left() + (self.vector.get_dx() * time_delta).min(0.0)
-            )
+        )
     }
 
     pub fn get_elasticity(&self, rad: f64) -> f64 {
@@ -111,13 +110,14 @@ impl Ship {
     }
 
     pub fn collision_bounce(&mut self, ship: &ShipCache) {
-        let dx = ship.circle.get_x() - self.circle.get_x();
-        let dy = ship.circle.get_y() - self.circle.get_y();
+        let dx = self.circle.get_x() - ship.circle.get_x();
+        let dy = self.circle.get_y() - ship.circle.get_y();
 
         // Move out of the other ship before changing trajectory
+        // We overcompensate slightly to avoid ships sticking to each other
         self.circle.move_by_vector(Vector {
-            direction: self.vector.direction + PI,
-            magnitude: self.circle.get_r() + ship.circle.get_r() - dx.hypot(dy)
+            direction: dx.atan2(dy),
+            magnitude: (self.circle.get_r() + ship.circle.get_r() - dx.hypot(dy)) * 1.2
         });
 
         // Change trajectory according to the angle of the collision
