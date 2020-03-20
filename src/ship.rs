@@ -1,14 +1,16 @@
+use crate::ai::*;
 use crate::broadcast::Broadcast;
 use crate::physics::*;
 use crate::shape::*;
 
 use std::f64::consts::{PI,FRAC_PI_2};
 
-const TAU: f64 = PI * 2.0;
+pub const TAU: f64 = PI * 2.0;
 
-#[derive(Clone,Debug)]
+#[derive(Debug)]
 pub struct Ship {
     id: u32,
+    brain: Box<Brain>,
     vector: Vector,
     circle: Circle,
     direction: f64,
@@ -19,6 +21,7 @@ impl Ship {
     pub fn new(x: f64, y: f64) -> Ship {
         Ship {
             id: 0,
+            brain: Box::new(JalapenoBrain::new()),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
@@ -29,6 +32,7 @@ impl Ship {
     pub fn new_r(x: f64, y: f64, r: f64) -> Ship {
         Ship {
             id: 0,
+            brain: Box::new(JalapenoBrain::new()),
             vector: Vector::empty(),
             circle: Circle::new(x, y, r),
             direction: PI,
@@ -48,7 +52,7 @@ impl Ship {
         self.direction = d;
     }
 
-    pub fn get_trajectory(&self, time_delta: f64) -> Rectangle {
+    pub fn get_trajectory_bounds(&self, time_delta: f64) -> Rectangle {
         //Rectangle::from_bounds(self.circle.top(), self.circle.right(),
         //                       self.circle.bottom(), self.circle.left())
         Rectangle::from_bounds(
@@ -62,6 +66,13 @@ impl Ship {
     pub fn get_elasticity(&self, rad: f64) -> f64 {
         // Todo: Make it possible to do something different with elasticity
         0.9 - f64::abs(self.direction - rad) / 400.0
+    }
+
+    pub fn aim(&mut self, point: Point) {
+        let dx = self.get_x() - point.x;
+        let dy = self.get_y() - point.y;
+
+        self.direction = f64::atan2(-dx, -dy);
     }
 
     pub fn thrust(&mut self, m: f64) {
@@ -85,16 +96,9 @@ impl Ship {
             // Reduce speed each tick until we reach 0.0
             self.vector.magnitude = (self.vector.magnitude - 80.0 * time_delta).max(0.0);
         }
-
-        /*
-        let radian_delta: f64 = goal - self.direction;
-        self.direction += radian_delta.abs().min(TAU * time_delta) * (radian_delta - PI).signum();
-        self.direction %= TAU;
-         */
     }
 
     pub fn abide_physics(&mut self, time_delta: f64) {
-        //self.circle.abide_physics(time_delta);
         self.circle.move_by(
             self.vector.get_dx() * time_delta,
             self.vector.get_dy() * time_delta
@@ -107,6 +111,23 @@ impl Ship {
         if (self.direction > 0.0) {
             self.direction += TAU;
         }
+    }
+
+    pub fn check_collisions(&mut self, time_delta: f64, actors: &Vec<ShipCache>) -> bool {
+        let mut collision = false;
+        let trajectory = self.get_trajectory_bounds(time_delta);
+
+        for actor in actors.iter() {
+            if actor.id != self.id &&
+                trajectory.check_collision_rectangle(&actor.trajectory) &&
+                self.circle.check_collision_circle(&actor.circle) {
+                collision = true;
+
+                self.collision_bounce(actor);
+            }
+        }
+
+        collision
     }
 
     pub fn collision_bounce(&mut self, ship: &ShipCache) {
@@ -128,93 +149,27 @@ impl Ship {
         self.vector.magnitude *= 2.0/3.0;
     }
 
-    pub fn act_player(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) {
-        let mut collision = false;
-        let trajectory = self.get_trajectory(time_delta);
-
-        for actor in actors.iter() {
-            if actor.id != self.id &&
-                trajectory.check_collision_rectangle(&actor.trajectory) &&
-                self.circle.check_collision_circle(&actor.circle) {
-                collision = true;
-
-                self.collision_bounce(actor);
-            }
-        }
-
-        if collision {
-            self.color = [0.7, 0.3, 0.3, 1.0];
-        } else {
-            self.color = [0.8, 0.4, 0.4, 1.0];
-        }
-
+    pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) {
+        self.check_collisions(time_delta, actors);
         self.abide_physics(time_delta);
 
-        let pressed: Vec<char> = cast.get_input();
-
-        if pressed.contains(&'M') {
-            let dx = self.get_x() - cast.cursor.0;
-            let dy = self.get_y() - cast.cursor.1;
-
-            self.direction = f64::atan2(-dx, -dy);
-            self.thrust(80.0 * time_delta);
-        }
-        else {
-            if pressed.contains(&'L') {
-                self.rotate(TAU * time_delta);
-            }
-            if pressed.contains(&'R') {
-                self.rotate(-TAU * time_delta);
-            }
-            if pressed.contains(&'T') {
-                self.thrust(80.0 * time_delta);
-            }
-            if pressed.contains(&'B') {
-                self.brake(time_delta);
+        for d in self.brain.think(time_delta, cast, actors) {
+            match d {
+                Directive::Rotate(n) => self.rotate(n),
+                Directive::Thrust(n) => self.thrust(n),
+                Directive::Brake => self.brake(time_delta),
+                Directive::Aim(p) => self.aim(p),
             }
         }
     }
 
-    pub fn act_npc(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) {
-        //self.rotate(PI * time_delta);
-
-
-        let mut collision = false;
-        let trajectory = self.get_trajectory(time_delta);
-
-        for actor in actors.iter() {
-            if actor.id != self.id &&
-                trajectory.check_collision_rectangle(&actor.trajectory) &&
-                self.circle.check_collision_circle(&actor.circle) {
-                    collision = true;
-
-                    self.collision_bounce(actor);
-            }
-        }
-
-        if collision {
-            self.color = [0.7, 0.3, 0.3, 1.0];
-        } else {
-            self.color = [0.8, 0.4, 0.4, 1.0];
-        }
-
-        self.abide_physics(time_delta);
-
-        let dx = self.get_x() - cast.player_position.0;
-        let dy = self.get_y() - cast.player_position.1;
-
-        self.direction = f64::atan2(-dx, -dy);
-        self.thrust(8.0 * time_delta);
-
-    }
-
-    pub fn get_cache(&self) -> ShipCache {
+    pub fn get_cache(&self, time_delta: f64) -> ShipCache {
         ShipCache {
             id: self.id,
             vector: self.vector,
             circle: self.circle,
             direction: self.direction,
-            trajectory: self.get_trajectory(1.0/60.0),
+            trajectory: self.get_trajectory_bounds(1.0/60.0),
             color: self.color,
         }
     }
@@ -241,11 +196,12 @@ impl ShipFactory {
         }
     }
 
-    pub fn new_ship(&mut self, x: f64, y: f64) -> Ship {
+    pub fn new_bell(&mut self, x: f64, y: f64) -> Ship {
         self.count += 1;
 
         Ship {
             id: self.count,
+            brain: Box::new(BellBrain::new()),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
@@ -253,17 +209,30 @@ impl ShipFactory {
         }
     }
 
-    pub fn register_ship(&mut self, ship: Ship) -> Ship {
+    pub fn new_jalapeno(&mut self, x: f64, y: f64) -> Ship {
         self.count += 1;
-
-        let cache = ship.get_cache();
 
         Ship {
             id: self.count,
-            vector: cache.vector,
-            circle: cache.circle,
-            direction: cache.direction,
-            color: cache.color,
+            brain: Box::new(JalapenoBrain::new()),
+            vector: Vector::empty(),
+            circle: Circle::new(x, y, 18.0),
+            direction: PI,
+            color: [0.8, 0.4, 0.4, 1.0],
+        }
+    }
+
+
+    pub fn new_ship(&mut self, x: f64, y: f64) -> Ship {
+        self.count += 1;
+
+        Ship {
+            id: self.count,
+            brain: Box::new(JalapenoBrain::new()),
+            vector: Vector::empty(),
+            circle: Circle::new(x, y, 18.0),
+            direction: PI,
+            color: [0.8, 0.4, 0.4, 1.0],
         }
     }
 }
@@ -316,6 +285,7 @@ mod tests {
     fn collide(a: Vector, b: Vector) {
         let mut a = Ship {
             id: 0,
+            brain: Box::new(JalapenoBrain::new()),
             vector: a,
             circle: Circle::new(0.0, 0.0, 18.0),
             direction: PI,
@@ -324,6 +294,7 @@ mod tests {
 
         let mut b = Ship {
             id: 1,
+            brain: Box::new(JalapenoBrain::new()),
             vector: b,
             circle: Circle::new(90.0, 0.0, 18.0),
             direction: PI,
@@ -333,7 +304,7 @@ mod tests {
         let cast = Broadcast::new();
 
         for i in 0..2 {
-            let actors = vec![a.get_cache(), b.get_cache()];
+            let actors = vec![a.get_cache(1.0/60.0), b.get_cache(1.0/60.0)];
 
             a.act_player(1.0, &cast, &actors);
             b.act_player(1.0, &cast, &actors);

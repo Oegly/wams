@@ -1,5 +1,25 @@
 use crate::physics::*;
 
+const EPSILON: f64 = 0.01;
+
+fn check_collision_point_point(a: &Point, b: &Point) -> bool {
+    (a.get_x() - b.get_x()).abs() >= EPSILON &&
+    (a.get_y() - b.get_y()).abs() >= EPSILON
+}
+
+fn check_collison_circle_circle(a: &Circle, b: &Circle) -> bool {
+    let dx = a.get_x() - b.get_x();
+    let dy = a.get_y() - b.get_y();
+
+    let distance = dx.hypot(dy);
+
+    if distance < a.get_r() + b.get_r() {
+        return true;
+    }
+
+    false
+}
+
 pub trait Shape {
     fn top(&self) -> f64;
     fn right(&self) -> f64;
@@ -18,6 +38,68 @@ pub trait Shape {
         }
 
         false
+    }
+}
+
+#[derive(Clone,Copy,Debug)]
+pub struct Point {
+    pub x: f64,
+    pub y: f64,
+}
+
+impl Point {
+    pub fn new(x: f64, y: f64) -> Point {
+        Point {
+            x: x,
+            y: y,
+        }
+    }
+
+    pub fn from_tuple(t: (f64, f64)) -> Point {
+        Point::new(t.0, t.1)
+    }
+
+    fn get_x(&self) -> f64 {
+        self.x
+    }
+
+    fn get_y(&self) -> f64 {
+        self.y
+    }
+}
+
+#[derive(Clone,Copy,Debug)]
+pub struct Segment {
+    pub point0: Point,
+    pub point1: Point,
+}
+
+impl Segment {
+    fn new(p0: Point, p1: Point) -> Segment {
+        Segment {
+            point0: p0,
+            point1: p1,
+        }
+    }
+
+    fn from_tuples(t0: (f64, f64), t1: (f64, f64)) -> Segment {
+        Segment::new(Point::from_tuple(t0), Point::from_tuple(t1))
+    }
+
+    fn get_dx(&self) -> f64 {
+        self.point1.x - self.point0.x
+    }
+
+    fn get_dy(&self) -> f64 {
+        self.point1.y - self.point0.y
+    }
+
+    fn get_direction(&self) -> f64 {
+        self.get_dx().atan2(self.get_dy())
+    }
+
+    fn get_length(&self) -> f64 {
+        self.get_dx().hypot(self.get_dy())
     }
 }
 
@@ -82,6 +164,7 @@ impl Shape for Rectangle {
     }
 
     fn check_collision_circle(&self, circle: &Circle) -> bool {
+        //TODO
         false
     }
 }
@@ -145,19 +228,11 @@ impl Shape for Circle {
     }
 
     fn check_collision_rectangle(&self, rect: &Rectangle) -> bool {
+        //TODO
         false
     }
 
     fn check_collision_circle(&self, circle: &Circle) -> bool {
-        let dx = self.x - circle.get_x();
-        let dy = self.y - circle.get_y();
-
-        let distance = dx.hypot(dy);
-
-        if distance < self.r + circle.get_r() {
-            return true;
-        }
-
-        false
+        check_collison_circle_circle(self, circle)
     }
 }

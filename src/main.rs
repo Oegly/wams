@@ -5,6 +5,7 @@ extern crate graphics;
 extern crate opengl_graphics;
 extern crate piston;
 
+mod ai;
 mod physics;
 mod ship;
 mod shape;
@@ -42,7 +43,7 @@ impl Game {
         self.cached_actors = Vec::new();
 
         // Cache player
-        self.cached_actors.push(self.player.get_cache());
+        self.cached_actors.push(self.player.get_cache(1.0/UPS as f64));
 
         /*
         if self.tick % 60 == 0 {
@@ -55,16 +56,16 @@ impl Game {
 
         // Cache non-player characters
         for mob in self.mobs.iter() {
-            self.cached_actors.push(mob.get_cache());
+            self.cached_actors.push(mob.get_cache(1.0/UPS as f64));
         }
 
         self.broadcast.record_actors(&self.cached_actors, Some(0));
 
         //self.player.add_inputs(self.broadcast.input.to_vec());
-        self.player.act_player(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
+        self.player.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
 
         for mob in self.mobs.iter_mut() {
-            mob.act_npc(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
+            mob.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
         }
 
         true
@@ -75,7 +76,7 @@ impl Game {
             graphics::clear(BG_COLOR, gl);
         });
 
-        let _c = self.player.get_cache();
+        let _c = self.player.get_cache(1.0/UPS as f64);
 
         for ship in self.cached_actors.iter() {
             sprite::ShipSprite::draw(&mut self.gl.borrow_mut(), args, &ship)
@@ -124,13 +125,13 @@ fn main() {
         .unwrap();
 
     let mut factory = ShipFactory::new();
-    let player = factory.new_ship(400.0, 350.0);
+    let player = factory.new_bell(400.0, 350.0);
     let mut mobs: Vec<Ship> = Vec::new();
 
 
     for i in 0..8 {
-        mobs.push(factory.new_ship(80.0 + 80.0 * i as f64, 100.0));
-        mobs.push(factory.new_ship(80.0 + 80.0 * i as f64, 600.0));
+        mobs.push(factory.new_jalapeno(80.0 + 80.0 * i as f64, 100.0));
+        mobs.push(factory.new_jalapeno(80.0 + 80.0 * i as f64, 600.0));
     }
 
     let mut game = Game {
