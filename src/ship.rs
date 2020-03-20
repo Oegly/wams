@@ -7,39 +7,24 @@ use std::f64::consts::{PI,FRAC_PI_2};
 
 pub const TAU: f64 = PI * 2.0;
 
+#[derive(Debug,Copy,Clone,Eq,PartialEq,Hash)]
+pub enum ShipCategory {
+    Bell,
+    Jalapeno,
+    Cayenne,
+}
+
 #[derive(Debug)]
 pub struct Ship {
     id: u32,
+    category: ShipCategory,
     brain: Box<Brain>,
     vector: Vector,
     circle: Circle,
     direction: f64,
-    color: [f32; 4],
 }
 
 impl Ship {
-    pub fn new(x: f64, y: f64) -> Ship {
-        Ship {
-            id: 0,
-            brain: Box::new(JalapenoBrain::new()),
-            vector: Vector::empty(),
-            circle: Circle::new(x, y, 18.0),
-            direction: PI,
-            color: [0.8, 0.4, 0.4, 1.0],
-        }
-    }
-
-    pub fn new_r(x: f64, y: f64, r: f64) -> Ship {
-        Ship {
-            id: 0,
-            brain: Box::new(JalapenoBrain::new()),
-            vector: Vector::empty(),
-            circle: Circle::new(x, y, r),
-            direction: PI,
-            color: [0.8, 0.4, 0.4, 1.0],
-        }
-    }
-
     pub fn get_x(&self) -> f64 {
         self.circle.get_x()
     }
@@ -166,11 +151,11 @@ impl Ship {
     pub fn get_cache(&self, time_delta: f64) -> ShipCache {
         ShipCache {
             id: self.id,
+            category: self.category,
             vector: self.vector,
             circle: self.circle,
             direction: self.direction,
             trajectory: self.get_trajectory_bounds(1.0/60.0),
-            color: self.color,
         }
     }
 }
@@ -201,11 +186,11 @@ impl ShipFactory {
 
         Ship {
             id: self.count,
+            category: ShipCategory::Bell,
             brain: Box::new(BellBrain::new()),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
-            color: [0.8, 0.4, 0.4, 1.0],
         }
     }
 
@@ -214,45 +199,40 @@ impl ShipFactory {
 
         Ship {
             id: self.count,
+            category: ShipCategory::Jalapeno,
             brain: Box::new(JalapenoBrain::new()),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
-            color: [0.8, 0.4, 0.4, 1.0],
         }
     }
 
-
-    pub fn new_ship(&mut self, x: f64, y: f64) -> Ship {
+    pub fn new_cayenne(&mut self, x: f64, y: f64) -> Ship {
         self.count += 1;
 
         Ship {
             id: self.count,
+            category: ShipCategory::Cayenne,
             brain: Box::new(JalapenoBrain::new()),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
-            color: [0.8, 0.4, 0.4, 1.0],
         }
     }
 }
 
 pub struct ShipCache {
     pub id: u32,
+    pub category: ShipCategory,
     pub vector: Vector,
     pub circle: Circle,
     pub direction: f64,
     pub trajectory: Rectangle,
-    pub color: [f32; 4],
 }
 
 impl ShipCache {
     pub fn render_piston(&self) -> [f64; 4] {
         [self.circle.get_x(), self.circle.get_y(), self.circle.get_r(), self.direction]
-    }
-
-    pub fn get_color(&self) -> [f32; 4] {
-        self.color
     }
 
     pub fn test_trajectory(&self) {
@@ -285,20 +265,20 @@ mod tests {
     fn collide(a: Vector, b: Vector) {
         let mut a = Ship {
             id: 0,
+            category: ShipCategory::Jalapeno,
             brain: Box::new(JalapenoBrain::new()),
             vector: a,
             circle: Circle::new(0.0, 0.0, 18.0),
             direction: PI,
-            color: [0.8, 0.4, 0.4, 1.0],
         };
 
         let mut b = Ship {
             id: 1,
+            category: ShipCategory::Jalapeno,
             brain: Box::new(JalapenoBrain::new()),
             vector: b,
             circle: Circle::new(90.0, 0.0, 18.0),
             direction: PI,
-            color: [0.8, 0.4, 0.4, 1.0],
         };
 
         let cast = Broadcast::new();
