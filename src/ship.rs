@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::ai::*;
 use crate::broadcast::Broadcast;
 use crate::physics::*;
@@ -26,6 +28,10 @@ pub struct Ship {
 }
 
 impl Ship {
+    pub fn get_id(&self) -> u32 {
+        self.id
+    }
+
     pub fn get_x(&self) -> f64 {
         self.circle.get_x()
     }
@@ -100,12 +106,12 @@ impl Ship {
         }
     }
 
-    pub fn check_collisions(&mut self, time_delta: f64, actors: &Vec<ShipCache>) -> bool {
+    pub fn check_collisions(&mut self, time_delta: f64, actors: &HashMap<u32, ShipCache>) -> bool {
         let mut collision = false;
         let trajectory = self.get_trajectory_bounds(time_delta);
 
-        for actor in actors.iter() {
-            if actor.id != self.id &&
+        for (id, actor) in actors.iter() {
+            if *id != self.id &&
                 trajectory.check_collision_rectangle(&actor.trajectory) &&
                 self.circle.check_collision_circle(&actor.circle) {
                 collision = true;
@@ -136,7 +142,7 @@ impl Ship {
         self.vector.magnitude *= 2.0/3.0;
     }
 
-    pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) {
+    pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) {
         self.check_collisions(time_delta, actors);
         self.abide_physics(time_delta);
 
@@ -288,12 +294,13 @@ mod tests {
 
         let cast = Broadcast::new();
 
+        /*
         for i in 0..2 {
             let actors = vec![a.get_cache(1.0/60.0), b.get_cache(1.0/60.0)];
 
             a.act_player(1.0, &cast, &actors);
             b.act_player(1.0, &cast, &actors);
-        }
+        }*/
 
         println!("{:}\n{:}", a, b)
     }

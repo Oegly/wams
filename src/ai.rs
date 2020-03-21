@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::broadcast::*;
 use crate::physics::*;
 use crate::shape::*;
@@ -11,7 +13,7 @@ pub enum Directive {
 }
 
 pub trait Brain {
-    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) -> Vec<Directive>;
+    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive>;
 }
 
 impl std::fmt::Debug for Brain {
@@ -34,7 +36,7 @@ impl BellBrain {
 }
 
 impl Brain for BellBrain {
-    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) -> Vec<Directive> {
+    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive> {
         let pressed: Vec<char> = cast.get_input();
 
         if pressed.contains(&'M') {
@@ -75,7 +77,7 @@ impl JalapenoBrain {
 }
 
 impl Brain for JalapenoBrain {
-    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) -> Vec<Directive> {
+    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive> {
         vec![Directive::Aim(cast.player_position), Directive::Thrust(1.0 * time_delta)]
     }
 }

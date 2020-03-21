@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::physics::Vector;
 use crate::shape::*;
 use crate::ship::*;
@@ -19,9 +21,9 @@ impl Broadcast {
         }
     }
 
-    pub fn record_actors(&mut self, actors: &Vec<ShipCache>, player_id: Option<usize>) {
+    pub fn record_actors(&mut self, actors: &HashMap<u32, ShipCache>, player_id: Option<u32>) {
         match player_id {
-            Some(id) => self.player_position = Point::new(actors[id].circle.get_x(), actors[id].circle.get_y()),
+            Some(id) => self.player_position = Point::new(actors[&id].circle.get_x(), actors[&id].circle.get_y()),
             None => println!("No player present. :("),
         }
     }

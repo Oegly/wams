@@ -13,6 +13,7 @@ mod sprite;
 mod broadcast;
 
 use std::cell::RefCell;
+use std::collections::HashMap;
 use piston::window::WindowSettings;
 use piston::event_loop::*;
 use piston::input::*;
@@ -30,7 +31,7 @@ pub struct Game {
     gl: RefCell<GlGraphics>,
     player: Ship,
     mobs: Vec<Ship>,
-    cached_actors: Vec<ShipCache>,
+    cached_actors: HashMap<u32, ShipCache>,
     broadcast: Broadcast,
     pressed: Vec<char>,
 }
@@ -40,17 +41,17 @@ impl Game {
         self.tick += 1;
 
         // Flush cache
-        self.cached_actors = Vec::new();
+        self.cached_actors = HashMap::new();
 
         // Cache player
-        self.cached_actors.push(self.player.get_cache(1.0/UPS as f64));
+        self.cached_actors.insert(self.player.get_id(), self.player.get_cache(1.0/UPS as f64));
 
         // Cache non-player characters
         for mob in self.mobs.iter() {
-            self.cached_actors.push(mob.get_cache(1.0/UPS as f64));
+            self.cached_actors.insert(mob.get_id(), mob.get_cache(1.0/UPS as f64));
         }
 
-        self.broadcast.record_actors(&self.cached_actors, Some(0));
+        self.broadcast.record_actors(&self.cached_actors, Some(1));
 
         //self.player.add_inputs(self.broadcast.input.to_vec());
         self.player.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
@@ -69,7 +70,7 @@ impl Game {
 
         let _c = self.player.get_cache(1.0/UPS as f64);
 
-        for ship in self.cached_actors.iter() {
+        for (id, ship) in self.cached_actors.iter() {
             sprite::ShipSprite::draw(&mut self.gl.borrow_mut(), args, &ship)
         }
     }
@@ -132,7 +133,7 @@ fn main() {
         gl: RefCell::new(GlGraphics::new(opengl)),
         player: player,
         mobs: mobs,
-        cached_actors: Vec::new(),
+        cached_actors: HashMap::new(),
         broadcast: Broadcast::new(),
         pressed: Vec::new(),
     };
