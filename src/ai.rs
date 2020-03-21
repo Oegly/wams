@@ -24,12 +24,14 @@ impl std::fmt::Debug for Brain {
 
 #[derive(Clone,Debug)]
 pub struct BellBrain {
+    id: u32,
     previous_collisons: Vec<u32>,
 }
 
 impl BellBrain {
-    pub fn new() -> BellBrain {
+    pub fn new(id: u32) -> BellBrain {
         BellBrain {
+            id: id,
             previous_collisons: Vec::new(),
         }
     }
@@ -65,12 +67,14 @@ impl Brain for BellBrain {
 
 #[derive(Clone,Debug)]
 pub struct JalapenoBrain {
+    id: u32,
     previous_collisons: Vec<u32>,
 }
 
 impl JalapenoBrain {
-    pub fn new() -> JalapenoBrain {
+    pub fn new(id: u32) -> JalapenoBrain {
         JalapenoBrain {
+            id: id,
             previous_collisons: Vec::new(),
         }
     }

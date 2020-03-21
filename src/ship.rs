@@ -195,7 +195,7 @@ impl ShipFactory {
         Ship {
             id: self.count,
             category: ShipCategory::Bell,
-            brain: Box::new(BellBrain::new()),
+            brain: Box::new(BellBrain::new(self.count)),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
@@ -209,7 +209,7 @@ impl ShipFactory {
         Ship {
             id: self.count,
             category: ShipCategory::Jalapeno,
-            brain: Box::new(JalapenoBrain::new()),
+            brain: Box::new(JalapenoBrain::new(self.count)),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
@@ -223,7 +223,7 @@ impl ShipFactory {
         Ship {
             id: self.count,
             category: ShipCategory::Cayenne,
-            brain: Box::new(JalapenoBrain::new()),
+            brain: Box::new(JalapenoBrain::new(self.count)),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
