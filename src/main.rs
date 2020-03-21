@@ -45,15 +45,6 @@ impl Game {
         // Cache player
         self.cached_actors.push(self.player.get_cache(1.0/UPS as f64));
 
-        /*
-        if self.tick % 60 == 0 {
-            println!("{:.2} {:.2} {:.2} {:.2}",
-                     self.cached_actors[0].circle.get_x(),
-                     self.cached_actors[0].circle.get_y(),
-                     self.cached_actors[0].direction,
-                     self.cached_actors[0].circle.get_vector().magnitude);
-        }*/
-
         // Cache non-player characters
         for mob in self.mobs.iter() {
             self.cached_actors.push(mob.get_cache(1.0/UPS as f64));
@@ -129,10 +120,12 @@ fn main() {
     let mut mobs: Vec<Ship> = Vec::new();
 
 
-    for i in 0..8 {
-        mobs.push(factory.new_jalapeno(80.0 + 80.0 * i as f64, 100.0));
-        mobs.push(factory.new_jalapeno(80.0 + 80.0 * i as f64, 600.0));
+    for i in 0..4 {
+        mobs.push(factory.new_jalapeno(160.0 + 160.0 * i as f64, 100.0));
+        mobs.push(factory.new_jalapeno(160.0 + 160.0 * i as f64, 600.0));
     }
+
+    mobs.push(factory.new_cayenne(160.0, 350.0));
 
     let mut game = Game {
         tick: 0,
