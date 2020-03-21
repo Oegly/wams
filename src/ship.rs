@@ -22,6 +22,7 @@ pub struct Ship {
     vector: Vector,
     circle: Circle,
     direction: f64,
+    force: f64,
 }
 
 impl Ship {
@@ -61,10 +62,11 @@ impl Ship {
     }
 
     pub fn thrust(&mut self, m: f64) {
+        // Add to the vector. m is a percentage of the maximum force.
         self.vector.add_vector(
             Vector {
                 direction: self.direction,
-                magnitude: m
+                magnitude: self.force.min(self.force * m)
             });
     }
 
@@ -76,10 +78,10 @@ impl Ship {
         // Get in position. First find the opposite angle.
         self.direction = (self.vector.direction + PI) % TAU;
 
-        // Are we in position?
+        // Are we in position? Any explicit rotation will be overridden.
         if (self.direction % TAU == (self.vector.direction + PI) % TAU) {
             // Reduce speed each tick until we reach 0.0
-            self.vector.magnitude = (self.vector.magnitude - 80.0 * time_delta).max(0.0);
+            self.vector.magnitude = (self.vector.magnitude - self.force * time_delta).max(0.0);
         }
     }
 
@@ -191,6 +193,7 @@ impl ShipFactory {
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
+            force: 80.0,
         }
     }
 
@@ -204,6 +207,7 @@ impl ShipFactory {
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
+            force: 8.0,
         }
     }
 
@@ -217,6 +221,7 @@ impl ShipFactory {
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
             direction: PI,
+            force: 40.0,
         }
     }
 }

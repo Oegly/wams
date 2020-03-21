@@ -20,7 +20,6 @@ impl std::fmt::Debug for Brain {
     }
 }
 
-
 #[derive(Clone,Debug)]
 pub struct BellBrain {
     previous_collisons: Vec<u32>,
@@ -51,7 +50,7 @@ impl Brain for BellBrain {
                 ret.push(Directive::Rotate(-TAU * time_delta));
             }
             if pressed.contains(&'T') {
-                ret.push(Directive::Thrust(80.0 * time_delta));
+                ret.push(Directive::Thrust(1.0 * time_delta));
             }
             if pressed.contains(&'B') {
                 ret.push(Directive::Brake);
@@ -77,6 +76,6 @@ impl JalapenoBrain {
 
 impl Brain for JalapenoBrain {
     fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &Vec<ShipCache>) -> Vec<Directive> {
-        vec![Directive::Aim(cast.player_position), Directive::Thrust(8.0 * time_delta)]
+        vec![Directive::Aim(cast.player_position), Directive::Thrust(1.0 * time_delta)]
     }
 }
