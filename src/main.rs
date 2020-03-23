@@ -127,6 +127,8 @@ fn main() {
     }
 
     mobs.push(factory.new_cayenne(160.0, 350.0));
+    mobs.push(factory.new_cayenne(640.0, 350.0));
+    mobs.push(factory.new_cayenne(400.0, 600.0));
 
     let mut game = Game {
         tick: 0,

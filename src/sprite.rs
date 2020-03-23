@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use piston::input::*;
 use opengl_graphics::{GlGraphics, OpenGL};
 
+use crate::physics::*;
 use crate::ship::*;
 
 fn get_pallette(category: ShipCategory) -> [[f32; 4]; 2]{
@@ -15,6 +16,10 @@ fn get_pallette(category: ShipCategory) -> [[f32; 4]; 2]{
     }
 }
 
+fn change_alpha(color: [f32; 4], alpha: f32) -> [f32; 4] {
+    [color[0], color[1], color[2], alpha]
+}
+
 pub struct ShipSprite {}
 
 impl ShipSprite {
@@ -22,7 +27,14 @@ impl ShipSprite {
         use crate::graphics::Transformed;
 
         let [_x, _y, _r, _d] = ship.render_piston();
-        let [ship_color, wing_color] = get_pallette(ship.category);
+        let colors = get_pallette(ship.category);
+
+        let ship_color = change_alpha(colors[0], ship.health as f32 * 0.008 + 0.2);
+        let wing_color = change_alpha(colors[1], ship.health as f32 * 0.008 + 0.2);
+
+        let pv = Vector::new(ship.direction, ship.vector.magnitude);
+        let [fx, fy] = [_x + ship.vector.get_dx(), _y + ship.vector.get_dy()];
+        let [px, py] = [_x + pv.get_dx(), _y + pv.get_dy()];
 
         gl.draw(args.viewport(), |c, gl| {
             let body = [_x - _r, _y - _r, _r * 2.0, _r * 2.0];
@@ -40,14 +52,10 @@ impl ShipSprite {
             graphics::polygon(wing_color, &wing, transform.flip_h(), gl);
             graphics::ellipse(ship_color, body, c.transform, gl);
 
+            //graphics::line(ship_color, 1.0, [_x, _y, fx, fy], c.transform, gl);
+            //graphics::line(wing_color, 1.0, [_x, _y, px, py], c.transform, gl);
+
             //graphics::rectangle([1.0, 1.0, 1.0, 0.4], ship.trajectory.render_piston(), c.transform, gl);
         });
     }
 }
-
-            /*
-            println!("New loop, rotating {:.2} radians. \n{:?}", rotation, c.transform);
-            println!("{:?}", c.transform.trans(x, y));
-            println!("{:?}", c.transform.trans(x, y).rot_rad(rotation));
-            println!("{:?}", c.transform.trans(x, y).rot_rad(rotation).trans(-25.0, -25.0));
-             */

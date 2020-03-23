@@ -23,6 +23,7 @@ pub struct Ship {
     brain: Box<Brain>,
     vector: Vector,
     circle: Circle,
+    health: f64,
     direction: f64,
     force: f64,
 }
@@ -114,9 +115,10 @@ impl Ship {
             if *id != self.id &&
                 trajectory.check_collision_rectangle(&actor.trajectory) &&
                 self.circle.check_collision_circle(&actor.circle) {
-                collision = true;
-
-                self.collision_bounce(actor);
+                    collision = true;
+                    self.health -= &actor.vector.magnitude / 10.0;
+                    println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
+                    self.collision_bounce(actor);
             }
         }
 
@@ -146,6 +148,10 @@ impl Ship {
         self.check_collisions(time_delta, actors);
         self.abide_physics(time_delta);
 
+        if self.health <= 0.0 {
+            return ();
+        }
+
         for d in self.brain.think(time_delta, cast, actors) {
             match d {
                 Directive::Rotate(n) => self.rotate(n),
@@ -162,6 +168,7 @@ impl Ship {
             category: self.category,
             vector: self.vector,
             circle: self.circle,
+            health: self.health,
             direction: self.direction,
             force: self.force,
             trajectory: self.get_trajectory_bounds(1.0/60.0),
@@ -199,6 +206,7 @@ impl ShipFactory {
             brain: Box::new(BellBrain::new(self.count)),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
+            health: 100.0,
             direction: PI,
             force: 80.0,
         }
@@ -212,6 +220,7 @@ impl ShipFactory {
             category: ShipCategory::Jalapeno,
             brain: Box::new(JalapenoBrain::new(self.count)),
             vector: Vector::empty(),
+            health: 100.0,
             circle: Circle::new(x, y, 18.0),
             direction: PI,
             force: 8.0,
@@ -227,6 +236,7 @@ impl ShipFactory {
             brain: Box::new(CayenneBrain::new(self.count)),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
+            health: 100.0,
             direction: PI,
             force: 40.0,
         }
@@ -238,6 +248,7 @@ pub struct ShipCache {
     pub category: ShipCategory,
     pub vector: Vector,
     pub circle: Circle,
+    pub health: f64,
     pub direction: f64,
     pub force: f64,
     pub trajectory: Rectangle,
