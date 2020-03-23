@@ -7,6 +7,7 @@ use crate::ship::*;
 pub struct Broadcast {
     pub cursor: (f64, f64),
     pub input: Vec<char>,
+    pub player_id: Option<u32>,
     pub player_position: Point,
     pub messages: Vec<Message>
 }
@@ -16,6 +17,7 @@ impl Broadcast {
         Broadcast {
             cursor: (0.0, 0.0),
             input: Vec::new(),
+            player_id: None,
             player_position: Point::new(0.0, 0.0),
             messages: Vec::new(),
         }
@@ -23,9 +25,14 @@ impl Broadcast {
 
     pub fn record_actors(&mut self, actors: &HashMap<u32, ShipCache>, player_id: Option<u32>) {
         match player_id {
-            Some(id) => self.player_position = Point::new(actors[&id].circle.get_x(), actors[&id].circle.get_y()),
+            Some(id) => self.record_player(&actors[&id]),
             None => println!("No player present. :("),
         }
+    }
+
+    pub fn record_player(&mut self, player: &ShipCache) {
+        self.player_id = Some(player.id);
+        self.player_position = Point::new(player.circle.get_x(), player.circle.get_y());
     }
 
     pub fn move_cursor(&mut self, x: f64, y: f64) {
