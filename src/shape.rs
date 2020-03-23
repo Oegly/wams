@@ -1,10 +1,36 @@
 use crate::physics::*;
 
-const EPSILON: f64 = 0.01;
+const POINT_EPSILON: f64 = 0.01;
 
 fn check_collision_point_point(a: &Point, b: &Point) -> bool {
-    (a.get_x() - b.get_x()).abs() >= EPSILON &&
-    (a.get_y() - b.get_y()).abs() >= EPSILON
+    (a.get_x() - b.get_x()).abs() >= POINT_EPSILON &&
+    (a.get_y() - b.get_y()).abs() >= POINT_EPSILON
+}
+
+fn check_collision_point_segment(point: &Point, segment: &Segment) -> bool {
+    let distance = point.distance(segment.point0) + point.distance(segment.point1);
+    (segment.get_length() - distance).abs() <= POINT_EPSILON
+}
+
+fn check_collision_point_circle(point: &Point, circle: &Circle) -> bool {
+    point.distance(Point::new(circle.x, circle.y)) < circle.r
+}
+
+fn check_collision_segment_circle(segment: &Segment, circle: &Circle) -> bool {
+    if circle.check_collision_point(&segment.point0) || circle.check_collision_point(&segment.point1) {
+        return true;
+    }
+
+    let dot = (((circle.x - segment.point0.x) * (segment.point1.x - segment.point0.x)) +
+               ((circle.y - segment.point0.y) * (segment.point1.y - segment.point0.y))) /
+        segment.get_length().powf(2.0);
+
+    let p = Point::new(
+        segment.point0.x + dot * (segment.point1.x - segment.point0.x),
+        segment.point0.y + dot * (segment.point1.y - segment.point0.y)
+    );
+
+    circle.check_collision_point(&p) && segment.check_collision_point(&p)
 }
 
 fn check_collison_circle_circle(a: &Circle, b: &Circle) -> bool {
@@ -59,12 +85,16 @@ impl Point {
         Point::new(t.0, t.1)
     }
 
-    fn get_x(&self) -> f64 {
+    pub fn get_x(&self) -> f64 {
         self.x
     }
 
-    fn get_y(&self) -> f64 {
+    pub fn get_y(&self) -> f64 {
         self.y
+    }
+
+    pub fn distance(&self, point: Point) -> f64 {
+        (self.x - point.x).abs().hypot((self.y - point.y).abs())
     }
 }
 
@@ -75,32 +105,48 @@ pub struct Segment {
 }
 
 impl Segment {
-    fn new(p0: Point, p1: Point) -> Segment {
+    pub fn new(p0: Point, p1: Point) -> Segment {
         Segment {
             point0: p0,
             point1: p1,
         }
     }
 
-    fn from_tuples(t0: (f64, f64), t1: (f64, f64)) -> Segment {
+    pub fn from_tuples(t0: (f64, f64), t1: (f64, f64)) -> Segment {
         Segment::new(Point::from_tuple(t0), Point::from_tuple(t1))
     }
 
-    fn get_dx(&self) -> f64 {
+    pub fn from_vector(x: f64, y: f64, vector: Vector) -> Segment {
+        Segment {
+            point0: Point::new(x, y),
+            point1: Point::new(x + vector.get_dx(), y + vector.get_dy())
+        }
+    }
+
+    pub fn get_dx(&self) -> f64 {
         self.point1.x - self.point0.x
     }
 
-    fn get_dy(&self) -> f64 {
+    pub fn get_dy(&self) -> f64 {
         self.point1.y - self.point0.y
     }
 
-    fn get_direction(&self) -> f64 {
+    pub fn get_direction(&self) -> f64 {
         self.get_dx().atan2(self.get_dy())
     }
 
-    fn get_length(&self) -> f64 {
+    pub fn get_length(&self) -> f64 {
         self.get_dx().hypot(self.get_dy())
     }
+
+    pub fn check_collision_point(&self, point: &Point) -> bool {
+        check_collision_point_segment(point, self)
+    }
+
+    pub fn check_collision_circle(&self, circle: &Circle) -> bool {
+        check_collision_segment_circle(self, circle)
+    }
+
 }
 
 #[derive(Clone,Copy,Debug)]
@@ -171,9 +217,9 @@ impl Shape for Rectangle {
 
 #[derive(Clone,Copy,Debug)]
 pub struct Circle {
-    x: f64,
-    y: f64,
-    r: f64,
+    pub x: f64,
+    pub y: f64,
+    pub r: f64,
 }
 
 impl Circle {
@@ -207,7 +253,9 @@ impl Circle {
         self.y += v.get_dy();
     }
 
-
+    pub fn check_collision_point(&self, point: &Point) -> bool {
+        check_collision_point_circle(point, self)
+    }
 }
 
 impl Shape for Circle {
