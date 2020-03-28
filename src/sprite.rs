@@ -1,12 +1,17 @@
 extern crate opengl_graphics;
 
 use std::collections::HashMap;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use piston::input::*;
 use opengl_graphics::{GlGraphics, OpenGL};
 
 use crate::physics::*;
 use crate::ship::*;
+use crate::game::*;
+
+const BG_COLOR: [f32; 4] = [0.6, 0.6, 0.8, 1.0];
 
 fn get_pallette(category: ShipCategory) -> [[f32; 4]; 2]{
     match category {
@@ -16,27 +21,52 @@ fn get_pallette(category: ShipCategory) -> [[f32; 4]; 2]{
     }
 }
 
-fn change_alpha(color: [f32; 4], alpha: f32) -> [f32; 4] {
-    [color[0], color[1], color[2], alpha]
+fn get_max_health(category: ShipCategory) -> f32 {
+    match category {
+        ShipCategory::Bell => 100.0,
+        ShipCategory::Jalapeno => 25.0,
+        ShipCategory::Cayenne => 200.0,
+    }
 }
 
-pub struct ShipSprite {}
+fn change_alpha(color: [f32; 4], hp: f32, category: ShipCategory) -> [f32; 4] {
+    let percentage_left = hp.max(0.0) / get_max_health(category);
+    [color[0], color[1], color[2], percentage_left * 0.8 + 0.2]
+}
+
+pub struct ShipSprite {
+    gl: Rc<RefCell<GlGraphics>>,
+    args: RenderArgs,
+}
 
 impl ShipSprite {
-    pub fn draw(gl: &mut GlGraphics, args: &RenderArgs, ship: &ShipCache) {
+    pub fn new(gl: Rc<RefCell<GlGraphics>>, args: RenderArgs) -> ShipSprite {
+        ShipSprite {
+            gl: gl,
+            args: args,
+        }
+    }
+
+    pub fn clear(&self) {
+        self.gl.borrow_mut().draw(self.args.viewport(), |c, gl| {
+            graphics::clear(BG_COLOR, gl);
+        });
+    }
+
+    pub fn draw(&self, ship: &ShipCache) {
         use crate::graphics::Transformed;
 
         let [_x, _y, _r, _d] = ship.render_piston();
         let colors = get_pallette(ship.category);
 
-        let ship_color = change_alpha(colors[0], ship.health as f32 * 0.008 + 0.2);
-        let wing_color = change_alpha(colors[1], ship.health as f32 * 0.008 + 0.2);
+        let ship_color = change_alpha(colors[0], ship.health as f32, ship.category);
+        let wing_color = change_alpha(colors[1], ship.health as f32, ship.category);
 
         let pv = Vector::new(ship.direction, ship.vector.magnitude);
         let [fx, fy] = [_x + ship.vector.get_dx(), _y + ship.vector.get_dy()];
         let [px, py] = [_x + pv.get_dx(), _y + pv.get_dy()];
 
-        gl.draw(args.viewport(), |c, gl| {
+        self.gl.borrow_mut().draw(self.args.viewport(), |c, gl| {
             let body = [_x - _r, _y - _r, _r * 2.0, _r * 2.0];
             let wing = [[0.0, 1.0], [0.0, -0.4], [-1.5, -0.4]];
             let nozzle = [[0.0, 1.0], [0.6, -1.2], [-0.6, -1.2]];

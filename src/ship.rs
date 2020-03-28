@@ -116,8 +116,8 @@ impl Ship {
                 trajectory.check_collision_rectangle(&actor.trajectory) &&
                 self.circle.check_collision_circle(&actor.circle) {
                     collision = true;
-                    self.health -= &actor.vector.magnitude / 10.0;
-                    println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
+
+                    //println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
                     self.collision_bounce(actor);
             }
         }
@@ -138,10 +138,16 @@ impl Ship {
 
         // Change trajectory according to the angle of the collision
         //self.vector.rotate(f64::atan2(dx, dy) + FRAC_PI_2);
+        let old_magnitude = self.vector.magnitude;
         let mut vector_delta = ship.vector.clone();
         vector_delta.subtract_vector(self.vector);
         self.vector.add_vector(vector_delta);
         self.vector.magnitude *= 2.0/3.0;
+
+        // Take damage
+        self.health -= (self.vector.magnitude - old_magnitude).abs() / 10.0;
+        //println!("Ship #{:} has {:.2} HP left after taking {:.2} damage.", self.id, self.health,
+        //(self.vector.magnitude - old_magnitude).abs() / 10.0);
     }
 
     pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) {
@@ -220,7 +226,7 @@ impl ShipFactory {
             category: ShipCategory::Jalapeno,
             brain: Box::new(JalapenoBrain::new(self.count)),
             vector: Vector::empty(),
-            health: 100.0,
+            health: 25.0,
             circle: Circle::new(x, y, 18.0),
             direction: PI,
             force: 8.0,
@@ -236,7 +242,7 @@ impl ShipFactory {
             brain: Box::new(CayenneBrain::new(self.count)),
             vector: Vector::empty(),
             circle: Circle::new(x, y, 18.0),
-            health: 100.0,
+            health: 200.0,
             direction: PI,
             force: 40.0,
         }

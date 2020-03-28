@@ -35,11 +35,15 @@ impl Broadcast {
         self.player_position = Point::new(player.circle.get_x(), player.circle.get_y());
     }
 
-    pub fn move_cursor(&mut self, x: f64, y: f64) {
-        self.cursor = (x, y);
+    pub fn set_pressed(&mut self, pressed: &Vec<char>) {
+        self.input = pressed.clone();
     }
 
-    pub fn press(&mut self, pressed: char) {
+    pub fn move_cursor(&mut self, cursor: &(f64, f64)) {
+        self.cursor = cursor.clone();
+    }
+
+/*    pub fn press(&mut self, pressed: char) {
         if !self.input.iter().any(|&b| b == pressed) {
             self.input.push(pressed);
         }
@@ -49,7 +53,7 @@ impl Broadcast {
         self.input.iter()
             .position(|&b| b == released)
             .map(|i| self.input.remove(i));
-    }
+    }*/
 
     pub fn get_input(&self) -> Vec<char> {
         self.input.to_vec()
