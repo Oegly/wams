@@ -1,28 +1,8 @@
-#![allow(unused)]
-
-/*
 extern crate glutin_window;
 extern crate graphics;
 extern crate opengl_graphics;
 extern crate piston;
- */
 
-pub mod ai;
-pub mod game;
-pub mod physics;
-pub mod ship;
-pub mod shape;
-pub mod sprite;
-pub mod broadcast;
-pub mod piston_bindings;
-
-use piston_bindings::wrapper;
-
-fn main() {
-    wrapper::main();
-}
-
-/*
 use std::cell::RefCell;
 use std::rc::Rc;
 use std::collections::HashMap;
@@ -32,10 +12,10 @@ use piston::input::*;
 use glutin_window::GlutinWindow;
 use opengl_graphics::{GlGraphics, OpenGL};
 
-use broadcast::*;
-use game::*;
-use ship::*;
-use sprite::*;
+use crate::broadcast::*;
+use crate::game::*;
+use crate::ship::*;
+use crate::piston_bindings::screen::*;
 
 const OPENGL_VERSION: glutin_window::OpenGL = OpenGL::V3_2;
 const BG_COLOR: [f32; 4] = [0.6, 0.6, 0.8, 1.0];
@@ -103,7 +83,7 @@ impl GameWrapper {
     }
 
     pub fn render(&mut self, r: RenderArgs) {
-        let s = sprite::ShipSprite::new(self.gl.clone(), r);
+        let s = ShipSprite::new(self.gl.clone(), r);
         s.clear();
         self.game.render(|ship| {
             s.draw(ship);
@@ -167,7 +147,7 @@ impl Inputs {
     }
 }
 
-fn main() {
+pub fn main() {
     let mut window: GlutinWindow = WindowSettings::new(
         "Well-Adjusted, Mature Spaceships",
         [1024, 768])
@@ -180,4 +160,3 @@ fn main() {
 
     println!("Thank you for playing!");
 }
-*/
