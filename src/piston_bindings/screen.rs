@@ -69,7 +69,7 @@ impl ShipSprite {
 
         self.gl.borrow_mut().draw(self.args.viewport(), |c, gl| {
             let body = [_x - _r, _y - _r, _r * 2.0, _r * 2.0];
-            let wing = [[0.0, 1.0], [0.0, -0.4], [-1.5, -0.4]];
+            let wing = [[0.0, 1.0], [1.5, -0.4], [-1.5, -0.4]];
             let nozzle = [[0.0, 1.0], [0.6, -1.2], [-0.6, -1.2]];
 
             let transform = c
@@ -80,7 +80,6 @@ impl ShipSprite {
 
             graphics::polygon(wing_color, &nozzle, transform, gl);
             graphics::polygon(wing_color, &wing, transform, gl);
-            graphics::polygon(wing_color, &wing, transform.flip_h(), gl);
             graphics::ellipse(ship_color, body, c.transform, gl);
 
             //graphics::line(ship_color, 1.0, [_x, _y, fx, fy], c.transform, gl);
