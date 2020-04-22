@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::ai::*;
-use crate::broadcast::Broadcast;
+use crate::broadcast::*;
 use crate::physics::*;
 use crate::shape::*;
 
@@ -146,15 +146,24 @@ impl Ship {
 
         // Take damage
         self.health -= (self.vector.magnitude - old_magnitude).abs() / 10.0;
+
         //println!("Ship #{:} has {:.2} HP left after taking {:.2} damage.", self.id, self.health,
         //(self.vector.magnitude - old_magnitude).abs() / 10.0);
     }
 
     pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) {
+        // Store state before collisions
+        let alive = self.health > 0.0;
+
         self.check_collisions(time_delta, actors);
         self.abide_physics(time_delta);
 
         if self.health <= 0.0 {
+            // If we were alive before collisions, notify the rest of our death
+            if alive {
+                cast.send_message(Message::new(0, self.id, MessageBody::Death));
+            }
+
             return ();
         }
 

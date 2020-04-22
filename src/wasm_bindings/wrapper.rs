@@ -61,8 +61,13 @@ impl GameWrapper {
 
     pub fn render(&mut self, ctx: &web_sys::CanvasRenderingContext2d) {
         clear_canvas(ctx);
+
         self.game.render(|ship| {
             ShipSprite::draw(ctx, ship);
         });
+
+        write_status(ctx, self.game.get_score(), self.game.get_player_health().ceil() as u32 );
+
+        //log((self.game.get_player_health() as u32).to_string());
     }
 }

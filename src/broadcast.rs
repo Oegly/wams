@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::cell::RefCell;
 
 use crate::physics::Vector;
 use crate::shape::*;
@@ -9,7 +10,8 @@ pub struct Broadcast {
     pub input: Vec<char>,
     pub player_id: Option<u32>,
     pub player_position: Point,
-    pub messages: Vec<Message>
+    pub messages: Vec<Message>,
+    outbox: RefCell<Vec<Message>>,
 }
 
 impl Broadcast {
@@ -19,8 +21,13 @@ impl Broadcast {
             input: Vec::new(),
             player_id: None,
             player_position: Point::new(0.0, 0.0),
+            outbox: RefCell::new(Vec::new()),
             messages: Vec::new(),
         }
+    }
+
+    pub fn update(&mut self) {
+        self.messages = self.outbox.replace(Vec::new());
     }
 
     pub fn record_actors(&mut self, actors: &HashMap<u32, ShipCache>, player_id: Option<u32>) {
@@ -43,29 +50,33 @@ impl Broadcast {
         self.cursor = cursor.clone();
     }
 
-/*    pub fn press(&mut self, pressed: char) {
-        if !self.input.iter().any(|&b| b == pressed) {
-            self.input.push(pressed);
-        }
-    }
-
-    pub fn release(&mut self, released: char) {
-        self.input.iter()
-            .position(|&b| b == released)
-            .map(|i| self.input.remove(i));
-    }*/
-
     pub fn get_input(&self) -> Vec<char> {
         self.input.to_vec()
     }
+
+    pub fn send_message(&self, msg: Message) {
+        self.outbox.borrow_mut().push(msg);
+    }
 }
 
+#[derive(Clone,Copy,Debug)]
 pub struct Message {
-    recipient: u32,
-    sender: u32,
-    body: MessageBody,
+    pub recipient: u32,
+    pub sender: u32,
+    pub body: MessageBody,
 }
 
+impl Message {
+    pub fn new(recipient: u32, sender: u32, body: MessageBody) -> Message {
+        Message {
+            recipient: recipient,
+            sender: sender,
+            body: body,
+        }
+    }
+}
+
+#[derive(Clone,Copy,Debug)]
 pub enum MessageBody {
     Death,
     Collison(Vector)

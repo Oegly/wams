@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::broadcast::*;
+use crate::physics::*;
 use crate::ship::*;
 
 const UPS: u64 = 60;
@@ -8,7 +9,9 @@ const UPS: u64 = 60;
 pub struct Game {
     tick: u64,
     player: Ship,
+    score: u32,
     mobs: Vec<Ship>,
+    factory: ShipFactory,
     cached_actors: HashMap<u32, ShipCache>,
     broadcast: Broadcast,
     pressed: Vec<char>,
@@ -16,10 +19,14 @@ pub struct Game {
 
 impl Game {
     pub fn new(player: Ship, mobs: Vec<Ship>) -> Game {
+        let mut factory = ShipFactory::new();
+
         Game {
             tick: 0,
-            player: player,
-            mobs: mobs,
+            player: factory.new_bell(400.0, 350.0),
+            score: 0,
+            mobs: Vec::new(),
+            factory: factory,
             cached_actors: HashMap::new(),
             broadcast: Broadcast::new(),
             pressed: Vec::new(),
@@ -29,11 +36,19 @@ impl Game {
     pub fn update(&mut self, pressed: &Vec<char>, cursor: &(f64, f64)) -> bool {
         self.tick += 1;
 
+        if self.tick % 360 == 0 {
+            self.create_ship();
+        }
+
+        self.broadcast.update();
+
+        self.read_messages();
+
         self.broadcast.set_pressed(pressed);
         self.broadcast.move_cursor(cursor);
 
         // Flush cache
-        self.cached_actors = HashMap::new();
+        self.cached_actors.clear();
 
         // Cache player
         self.cached_actors.insert(self.player.get_id(), self.player.get_cache(1.0/UPS as f64));
@@ -59,19 +74,58 @@ impl Game {
         //clear(); //r.clear();
 
         for (id, ship) in self.cached_actors.iter() {
-            draw(&ship)
+            draw(&ship);
         }
     }
-/*
-    pub fn pressed(&mut self, btn: char) {
-        self.broadcast.press(btn);
+
+    pub fn get_score(&self) -> u32 {
+        self.score
     }
 
-    pub fn cursor_moved(&mut self, x: f64, y: f64) {
-        self.broadcast.move_cursor(x, y);
+    pub fn get_player_health(&self) -> f64 {
+        self.cached_actors[&self.player.get_id()].health
     }
 
-    pub fn released(&mut self, btn: char) {
-        self.broadcast.release(btn);
-    }*/
+    fn create_ship(&mut self) {
+        let m = 600.0;
+        let d = (self.tick as f64 / 360.0 ) % TAU;
+        let v = Vector::new(d, m);
+
+        if self.tick % 1080 == 0 {
+            self.mobs.push(self.factory.new_cayenne(v.get_dx() + 512.0, v.get_dy() + 384.0));
+        } else {
+            self.mobs.push(self.factory.new_jalapeno(v.get_dx() + 512.0, v.get_dy() + 384.0));
+        }
+    }
+
+    fn read_messages(&mut self) {
+        let messages = self.broadcast.messages.iter()
+            .filter(|m| m.recipient == 0)
+            .cloned()
+            .collect::<Vec<Message>>();
+
+        for msg in messages {
+            match msg.body {
+                MessageBody::Death => self.process_death(msg.sender),
+                _ => ()
+            }
+        }
+    }
+
+    fn process_death(&mut self, id: u32) {
+        //println!("{}", id);
+
+        if id == self.player.get_id() {
+            println!("u ded");
+            return;
+        }
+
+        self.score += match self.cached_actors[&id].category {
+            ShipCategory::Jalapeno => 100,
+            ShipCategory::Cayenne => 300,
+            _ => 0,
+        };
+
+        println!("Ship #{} was killed. New score: {}", id, self.score);
+    }
 }

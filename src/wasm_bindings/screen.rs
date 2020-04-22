@@ -5,6 +5,9 @@ use crate::physics::*;
 use crate::ship::*;
 use crate::wasm_bindings::*;
 
+const FONT_COLOR: &str = "#444444";
+const HUD_COLOR: &str = "#666688";
+
 fn get_pallette(category: ShipCategory) ->  [String; 2] {
     match category {
         ShipCategory::Bell => ["#cc6666".to_string(), "#bb5555".to_string()],
@@ -62,5 +65,21 @@ impl ShipSprite {
         ctx.begin_path();
         ctx.arc(x, y, r, 0.0, std::f64::consts::PI * 2.0).unwrap();
         ctx.fill();
+
+        ctx.set_global_alpha(1.0);
     }
+}
+
+pub fn write_status(ctx: &web_sys::CanvasRenderingContext2d, score: u32, health: u32) {
+    ctx.set_global_alpha(0.4);
+    ctx.set_fill_style(&JsValue::from(&HUD_COLOR.to_string()));
+    ctx.fill_rect(10.0, 10.0, 120.0, 60.0);
+
+    ctx.set_global_alpha(1.0);
+    ctx.set_fill_style(&JsValue::from(&FONT_COLOR.to_string()));
+    ctx.set_font("16px Arial");
+    ctx.fill_text(&"Score:", 24.0, 36.0);
+    ctx.fill_text(&format!("{:>18}", score), 24.0, 36.0);
+    ctx.fill_text(&"Health", 24.0, 60.0);
+    ctx.fill_text(&format!("{:>18}", health), 24.0, 60.0);
 }
