@@ -44,7 +44,7 @@ impl Brain for BellBrain {
         let pressed: Vec<char> = cast.get_input();
 
         if pressed.contains(&'M') {
-            return vec![Directive::Aim(Point::from_tuple(cast.cursor)), Directive::Thrust(1.0 * time_delta)];
+            return vec![Directive::Aim(cast.cursor), Directive::Thrust(1.0 * time_delta)];
         }
         else {
             let mut ret = Vec::<Directive>::new();

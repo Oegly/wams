@@ -14,6 +14,7 @@ use opengl_graphics::{GlGraphics, OpenGL};
 
 use crate::broadcast::*;
 use crate::game::*;
+use crate::shape::*;
 use crate::ship::*;
 use crate::piston_bindings::screen::*;
 
@@ -119,14 +120,14 @@ impl GameWrapper {
 
 pub struct Inputs {
     pub pressed: Vec<char>,
-    pub cursor: (f64, f64),
+    pub cursor: Point,
 }
 
 impl Inputs {
     pub fn new() -> Inputs {
         Inputs {
             pressed: Vec::new(),
-            cursor: (0.0, 0.0)
+            cursor: Point::new(0.0, 0.0)
         }
     }
 
@@ -143,7 +144,7 @@ impl Inputs {
     }
 
     pub fn move_cursor(&mut self, x: f64, y: f64) {
-        self.cursor = (x, y);
+        self.cursor = Point::new(x, y);
     }
 }
 

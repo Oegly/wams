@@ -6,7 +6,7 @@ use crate::shape::*;
 use crate::ship::*;
 
 pub struct Broadcast {
-    pub cursor: (f64, f64),
+    pub cursor: Point,
     pub input: Vec<char>,
     pub player_id: Option<u32>,
     pub player_position: Point,
@@ -17,7 +17,7 @@ pub struct Broadcast {
 impl Broadcast {
     pub fn new() -> Broadcast {
         Broadcast {
-            cursor: (0.0, 0.0),
+            cursor: Point::new(0.0, 0.0),
             input: Vec::new(),
             player_id: None,
             player_position: Point::new(0.0, 0.0),
@@ -46,7 +46,7 @@ impl Broadcast {
         self.input = pressed.clone();
     }
 
-    pub fn move_cursor(&mut self, cursor: &(f64, f64)) {
+    pub fn move_cursor(&mut self, cursor: &Point) {
         self.cursor = cursor.clone();
     }
 

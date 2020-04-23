@@ -81,7 +81,8 @@ impl Point {
         }
     }
 
-    pub fn from_tuple(t: (f64, f64)) -> Point {
+    //<(f64, f64)>
+    pub fn from(t: (f64, f64)) -> Point {
         Point::new(t.0, t.1)
     }
 
@@ -113,7 +114,7 @@ impl Segment {
     }
 
     pub fn from_tuples(t0: (f64, f64), t1: (f64, f64)) -> Segment {
-        Segment::new(Point::from_tuple(t0), Point::from_tuple(t1))
+        Segment::new(Point::from(t0), Point::from(t1))
     }
 
     pub fn from_vector(x: f64, y: f64, vector: Vector) -> Segment {

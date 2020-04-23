@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use crate::broadcast::*;
 use crate::physics::*;
+use crate::shape::*;
 use crate::ship::*;
 
 const UPS: u64 = 60;
@@ -33,7 +34,7 @@ impl Game {
         }
     }
 
-    pub fn update(&mut self, pressed: &Vec<char>, cursor: &(f64, f64)) -> bool {
+    pub fn update(&mut self, pressed: &Vec<char>, cursor: &Point) -> bool {
         self.tick += 1;
 
         if self.tick % 360 == 0 {
