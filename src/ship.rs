@@ -20,7 +20,7 @@ pub enum ShipCategory {
 pub struct Ship {
     id: u32,
     category: ShipCategory,
-    brain: Box<Brain>,
+    brain: Box<dyn Brain>,
     vector: Vector,
     circle: Circle,
     health: f64,

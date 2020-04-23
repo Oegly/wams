@@ -58,7 +58,7 @@ impl Game {
             self.cached_actors.insert(mob.get_id(), mob.get_cache(1.0/UPS as f64));
         }
 
-        self.broadcast.record_actors(&self.cached_actors, Some(1));
+        self.broadcast.record_actors(&self.cached_actors, Some(self.player.get_id()));
 
         //self.player.add_inputs(self.broadcast.input.to_vec());
         self.player.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors);

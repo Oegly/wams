@@ -18,7 +18,7 @@ pub trait Brain {
     fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive>;
 }
 
-impl std::fmt::Debug for Brain {
+impl std::fmt::Debug for dyn Brain {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "I am a brain.")
     }
