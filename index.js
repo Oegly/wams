@@ -3,56 +3,87 @@
 // will work here one day as well!
 const rust = import('./pkg/index.js');
 
-//import rust from './pkg';
-
-console.log(rust);
 const canvas = document.createElement("canvas");
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width = 1024;
+canvas.height = 768;
 
 
 const ctx = canvas.getContext("2d");
 
 document.body.appendChild(canvas);
 
-let mouse_pressed = false;
-let pointer = [0, 0];
+class Clock {
+  constructor(tick_length) {
+    this.start = performance.now();
+    this.last = this.start;
+    this.tick_count = 0;
+    this.sleep = 0;
+    this.tick_length = tick_length;
+  }
 
-document.addEventListener("mousedown", (event) => {
-  mouse_pressed = true;
-});
+  tick() {
+    if (!(this.tick_count % 300)) {
+      let now = performance.now();
+      console.log(now, this.last, this.tick_length - (now - this.last));
+      this.speak();
+    }
 
-document.addEventListener("mouseup", (event) => {
-  mouse_pressed = false;
-});
+    this.tick_count += 1;
+    let now = performance.now();
+    let nap = this.tick_length - (now - this.last);
 
-document.addEventListener("mousemove", (event) => {
-  pointer = [event.layerX, event.layerY];
-  //console.log(pointer);
-  //console.log(event);
-});
+    this.last = now;
+    this.sleep += nap;
+    return nap;
+  }
 
+  speak() {
+    console.log("Tick #" + this.tick_count + ". Slept for a total of " + this.sleep + " seconds");
+  }
+
+}
+
+//const clock = new Clock(1000/60);
 
 const update = (game) => {
-  if (game.update(mouse_pressed, pointer[0], pointer[1])) {
+  let start = performance.now();
+
+  if (game.update()) {
     window.requestAnimationFrame(() => game.render(ctx));
-    window.setTimeout(() => update(game), 1000/60);
+    window.setTimeout(() => update(game), 1000/60 - (performance.now() - start));
   } else {
     console.log("u ded");
   }
 };
 
 const init = (m) => {
-  console.log(m);
   game = m.start();
 
-  //game.update();
-  //window.requestAnimationFrame(() => game.render(ctx));
+  document.addEventListener("mousedown", (event) => {
+    game.mouse_pressed();
+  });
 
-  console.log(ctx);
+  document.addEventListener("mouseup", (event) => {
+    game.mouse_released();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    game.pressed(event.keyCode);
+  });
+
+  document.addEventListener("keyup", (event) => {
+    game.released(event.keyCode);
+  });
+
+  document.addEventListener("mousemove", (event) => {
+    game.cursor_moved(event.layerX, event.layerY);
+  });
+
+  let clock = new Clock(1000/60)
+  console.log();
   console.log(m.start());
 
-  update(game);
+  update(game, clock);
 };
 
 rust
