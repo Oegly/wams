@@ -7,10 +7,23 @@ const canvas = document.createElement("canvas");
 canvas.width = 1024;
 canvas.height = 768;
 
-
 const ctx = canvas.getContext("2d");
 
 document.body.appendChild(canvas);
+
+const resizeCanvas = () => {
+  console.log(ctx);
+
+  if (window.innerHeight / window.innerWidth < 0.75) {
+    canvas.height = (window.innerWidth / 4) * 3;
+
+  } else {
+    canvas.width = (window.innerHeight / 3) * 4;
+  }
+
+  ctx.scale(1920 / canvas.width, 1080 / canvas.height);
+  console.log(ctx.scaleWidth, ctx.scaleHeight);
+};
 
 class Clock {
   constructor(tick_length) {
@@ -29,28 +42,23 @@ class Clock {
     }
 
     this.tick_count += 1;
-    let now = performance.now();
-    let nap = this.tick_length - (now - this.last);
 
-    this.last = now;
-    this.sleep += nap;
-    return nap;
+    return 1000/60 - (performance.now() - this.last);
   }
 
   speak() {
     console.log("Tick #" + this.tick_count + ". Slept for a total of " + this.sleep + " seconds");
   }
-
 }
 
 //const clock = new Clock(1000/60);
 
-const update = (game) => {
-  let start = performance.now();
+const update = (game, clock) => {
+  clock.last = performance.now();
 
   if (game.update()) {
     window.requestAnimationFrame(() => game.render(ctx));
-    window.setTimeout(() => update(game), 1000/60 - (performance.now() - start));
+    window.setTimeout(() => update(game, clock), clock.tick());
   } else {
     console.log("u ded");
   }
@@ -58,6 +66,8 @@ const update = (game) => {
 
 const init = (m) => {
   game = m.start();
+
+  window.addEventListener("resize", () => resizeCanvas(game));
 
   document.addEventListener("mousedown", (event) => {
     game.mouse_pressed();
@@ -79,11 +89,8 @@ const init = (m) => {
     game.cursor_moved(event.layerX, event.layerY);
   });
 
-  let clock = new Clock(1000/60)
-  console.log();
-  console.log(m.start());
-
-  update(game, clock);
+  //var clock = new Clock(1000/60);
+  update(game, new Clock(1000/60));
 };
 
 rust

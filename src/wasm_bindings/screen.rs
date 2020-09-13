@@ -42,20 +42,19 @@ impl ShipSprite {
 
         ctx.translate(x, y);
         ctx.rotate(-ship.direction);
-        ctx.scale(r, r);
 
         // Nozzle
         ctx.begin_path();
-        ctx.move_to(0.0, 1.0);
-        ctx.line_to(0.6, -1.2);
-        ctx.line_to(-0.6, -1.2);
+        ctx.move_to(0.0 * r, 1.0 * r);
+        ctx.line_to(0.6 * r, -1.2 * r);
+        ctx.line_to(-0.6 * r, -1.2 * r);
         ctx.fill();
 
         // Wings
         ctx.begin_path();
-        ctx.move_to(0.0, 1.0);
-        ctx.line_to(-1.5, -0.4);
-        ctx.line_to(1.5, -0.4);
+        ctx.move_to(0.0 * r, 1.0 * r);
+        ctx.line_to(-1.5 * r, -0.4 * r);
+        ctx.line_to(1.5 * r, -0.4 * r);
         ctx.fill();
 
         ctx.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
