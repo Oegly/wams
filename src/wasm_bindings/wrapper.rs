@@ -20,7 +20,8 @@ extern "C" {
 }
 
 pub fn clear_canvas(ctx: &web_sys::CanvasRenderingContext2d) {
-    ctx.clear_rect(0.0, 0.0, 1024.0, 768.0);
+    //log(format!("{}", ctx.canvas().height()));
+    ctx.clear_rect(0.0, 0.0, 1920.0, 1080.0);
 }
 
 #[wasm_bindgen]

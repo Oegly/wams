@@ -238,7 +238,7 @@ impl ShipFactory {
             health: 25.0,
             circle: Circle::new(x, y, 18.0),
             direction: PI,
-            force: 8.0,
+            force: 24.0,
         }
     }
 
@@ -253,7 +253,7 @@ impl ShipFactory {
             circle: Circle::new(x, y, 18.0),
             health: 200.0,
             direction: PI,
-            force: 40.0,
+            force: 16.0,
         }
     }
 }
