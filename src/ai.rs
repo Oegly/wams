@@ -16,7 +16,16 @@ pub enum Directive {
 
 pub trait Brain {
     fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive>;
+    fn box_clone(&self) -> Box<dyn Brain>;
 }
+
+
+impl Clone for Box<dyn Brain> {
+    fn clone(&self) -> Box<dyn Brain> {
+        self.box_clone()
+    }
+}
+
 
 impl std::fmt::Debug for dyn Brain {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -65,6 +74,10 @@ impl Brain for BellBrain {
             return ret;
         }
     }
+
+    fn box_clone(&self) -> Box<dyn Brain> {
+        Box::new((*self).clone())
+    }
 }
 
 #[derive(Clone,Debug)]
@@ -85,6 +98,10 @@ impl JalapenoBrain {
 impl Brain for JalapenoBrain {
     fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive> {
         vec![Directive::Aim(cast.player_position), Directive::Thrust(1.0 * time_delta)]
+    }
+
+    fn box_clone(&self) -> Box<dyn Brain> {
+        Box::new((*self).clone())
     }
 }
 
@@ -132,5 +149,9 @@ impl Brain for CayenneBrain {
             Some(id) => return self.chase(time_delta, &actors[&self.id], &actors[&id]),
             None => return vec![],
         }
+    }
+
+    fn box_clone(&self) -> Box<dyn Brain> {
+        Box::new((*self).clone())
     }
 }

@@ -16,7 +16,7 @@ pub enum ShipCategory {
     Cayenne,
 }
 
-#[derive(Debug)]
+#[derive(Clone,Debug)]
 pub struct Ship {
     id: u32,
     category: ShipCategory,
