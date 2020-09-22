@@ -12,7 +12,7 @@ pub struct Game {
     player: Ship,
     score: u32,
     mobs: Vec<Ship>,
-    factory: ShipFactory,
+    ship_count: u32,
     cached_actors: HashMap<u32, ShipCache>,
     broadcast: Broadcast,
     pressed: Vec<char>,
@@ -27,7 +27,7 @@ impl Game {
             player: factory.new_bell(400.0, 350.0),
             score: 0,
             mobs: Vec::new(),
-            factory: factory,
+            ship_count: 1,
             cached_actors: HashMap::new(),
             broadcast: Broadcast::new(),
             pressed: Vec::new(),
@@ -91,13 +91,22 @@ impl Game {
         let m = 600.0;
         let d = (self.tick as f64 / 360.0 ) % TAU;
         let v = Vector::new(d, m);
+        let [x, y] = [v.get_dx(), v.get_dy()];
+
+        let mut cat: ShipCategory;
 
         if self.tick % 1080 == 0 {
-            self.mobs.push(self.factory.new_cayenne(v.get_dx() + 512.0, v.get_dy() + 384.0));
+            cat = ShipCategory::Cayenne;
         } else {
-            self.mobs.push(self.factory.new_jalapeno(v.get_dx() + 512.0, v.get_dy() + 384.0));
+            cat = ShipCategory::Jalapeno;
         }
-    }
+
+        self.ship_count += 1;
+        
+        self.mobs.push(
+            ShipBuilder::new(cat).place(x + 512.0, y + 384.0).tag(self.ship_count).build()
+        );
+}
 
     fn read_messages(&mut self) {
         let messages = self.broadcast.messages.iter()

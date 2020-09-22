@@ -9,12 +9,17 @@ use std::f64::consts::{PI,FRAC_PI_2};
 
 pub const TAU: f64 = PI * 2.0;
 
+#[repr(usize)]
 #[derive(Debug,Copy,Clone,Eq,PartialEq,Hash)]
 pub enum ShipCategory {
-    Bell,
-    Jalapeno,
-    Cayenne,
+    Bell = 0,
+    Jalapeno = 1,
+    Cayenne = 2,
 }
+
+const RADIUS: [f64; 3] = [18.0, 18.0, 18.0];
+const HEALTH: [f64; 3] = [100.0, 25.0, 200.0];
+const FORCE: [f64; 3] = [80.0, 24.0, 16.0];
 
 #[derive(Clone,Debug)]
 pub struct Ship {
@@ -200,13 +205,64 @@ impl std::fmt::Display for Ship {
     }
 }
 
+pub struct ShipBuilder {
+    id: u32,
+    category: ShipCategory,
+    pos: Point,
+    vector: Vector,
+}
+
+impl ShipBuilder {
+    pub fn default() -> ShipBuilder {
+        ShipBuilder::new(ShipCategory::Bell)
+    }
+
+    pub fn new(category: ShipCategory) -> ShipBuilder {
+        ShipBuilder {
+            id: 0,
+            category: category,
+            pos: Point::new(0.0, 0.0),
+            vector: Vector::empty(),
+        }
+    }
+
+    pub fn set_vector(mut self, vector: Vector) -> Self {
+        self.vector = vector;
+        self
+    }
+
+    pub fn place(mut self, x: f64, y: f64) -> Self{
+        self.pos = Point::new(x, y);
+        self
+    }
+
+    pub fn tag(mut self, id: u32) -> Self {
+        self.id = id;
+        self
+    }
+
+    pub fn build(self) -> Ship {
+        let cat = self.category as usize;
+
+        Ship {
+            id: self.id,
+            category: self.category,
+            brain: build_brain(self.category, self.id),
+            vector: self.vector,
+            circle: Circle::new(self.pos.x, self.pos.y, RADIUS[cat]),
+            health: HEALTH[cat],
+            direction: PI,
+            force: FORCE[cat],
+        }
+    }
+}
+
 pub struct ShipFactory {
     count: u32,
 }
 
 impl ShipFactory {
     pub fn new() -> ShipFactory {
-        //println!("{}", std::mem::size_of::<u64>());
         ShipFactory {
             count: 0,
         }
@@ -215,46 +271,28 @@ impl ShipFactory {
     pub fn new_bell(&mut self, x: f64, y: f64) -> Ship {
         self.count += 1;
 
-        Ship {
-            id: self.count,
-            category: ShipCategory::Bell,
-            brain: Box::new(BellBrain::new(self.count)),
-            vector: Vector::empty(),
-            circle: Circle::new(x, y, 18.0),
-            health: 100.0,
-            direction: PI,
-            force: 80.0,
-        }
+        ShipBuilder::new(ShipCategory::Bell)
+        .place(x, y)
+        .tag(self.count)
+        .build()
     }
 
     pub fn new_jalapeno(&mut self, x: f64, y: f64) -> Ship {
         self.count += 1;
 
-        Ship {
-            id: self.count,
-            category: ShipCategory::Jalapeno,
-            brain: Box::new(JalapenoBrain::new(self.count)),
-            vector: Vector::empty(),
-            health: 25.0,
-            circle: Circle::new(x, y, 18.0),
-            direction: PI,
-            force: 24.0,
-        }
+        ShipBuilder::new(ShipCategory::Jalapeno)
+        .place(x, y)
+        .tag(self.count)
+        .build()
     }
 
     pub fn new_cayenne(&mut self, x: f64, y: f64) -> Ship {
         self.count += 1;
 
-        Ship {
-            id: self.count,
-            category: ShipCategory::Cayenne,
-            brain: Box::new(CayenneBrain::new(self.count)),
-            vector: Vector::empty(),
-            circle: Circle::new(x, y, 18.0),
-            health: 200.0,
-            direction: PI,
-            force: 16.0,
-        }
+        ShipBuilder::new(ShipCategory::Cayenne)
+        .place(x, y)
+        .tag(self.count)
+        .build()
     }
 }
 
@@ -306,23 +344,14 @@ mod tests {
     use crate::physics::*;
 
     fn collide(a: Vector, b: Vector) {
-        let mut a = Ship {
-            id: 0,
-            category: ShipCategory::Jalapeno,
-            brain: Box::new(JalapenoBrain::new()),
-            vector: a,
-            circle: Circle::new(0.0, 0.0, 18.0),
-            direction: PI,
-        };
+        let mut a = ShipBuilder::new(ShipCategory::Jalapeno)
+        .tag(0)
+        .build();
 
-        let mut b = Ship {
-            id: 1,
-            category: ShipCategory::Jalapeno,
-            brain: Box::new(JalapenoBrain::new()),
-            vector: b,
-            circle: Circle::new(90.0, 0.0, 18.0),
-            direction: PI,
-        };
+        let mut b = ShipBuilder::new(ShipCategory::Jalapeno)
+        .place(90.0, 0.0)
+        .tag(1)
+        .build();
 
         let cast = Broadcast::new();
 

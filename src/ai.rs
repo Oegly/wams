@@ -7,6 +7,14 @@ use crate::ship::*;
 
 use std::f64::consts::{PI,FRAC_PI_2};
 
+pub fn build_brain(category: ShipCategory, id: u32) -> Box<dyn Brain> {
+    match category {
+        ShipCategory::Bell => Box::new(BellBrain::new(id)),
+        ShipCategory::Jalapeno => Box::new(JalapenoBrain::new(id)),
+        ShipCategory::Cayenne => Box::new(CayenneBrain::new(id)),
+    }
+}
+
 pub enum Directive {
     Rotate(f64),
     Thrust(f64),
