@@ -7,6 +7,7 @@ extern crate console_error_panic_hook;
 extern crate wasm_bindgen;
 
 pub mod ai;
+pub mod asteroid;
 pub mod game;
 pub mod physics;
 pub mod ship;

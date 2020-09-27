@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
 use crate::physics::*;
+use crate::asteroid::*;
 use crate::ship::*;
 use crate::wasm_bindings::*;
 
@@ -66,6 +67,22 @@ impl ShipSprite {
         ctx.fill();
 
         ctx.set_global_alpha(1.0);
+    }
+}
+
+pub struct AsteroidSprite {}
+
+impl AsteroidSprite {
+    pub fn draw(ctx: &web_sys::CanvasRenderingContext2d, asteroid: &Asteroid) {
+        let circle = asteroid.get_circle();
+        let [x, y, r] = [circle.x, circle.y, circle.r];
+
+        //ctx.translate(x, y);
+
+        ctx.set_fill_style(&JsValue::from("#888"));
+        ctx.begin_path();
+        ctx.arc(x, y, r, 0.0, std::f64::consts::PI * 2.0).unwrap();
+        ctx.fill();
     }
 }
 

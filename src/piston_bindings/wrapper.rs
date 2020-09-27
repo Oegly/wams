@@ -85,10 +85,17 @@ impl GameWrapper {
 
     pub fn render(&mut self, r: RenderArgs) {
         let s = ShipSprite::new(self.gl.clone(), r);
+        let a = AsteroidSprite::new(self.gl.clone(), r);
+
         s.clear();
         self.game.render(|ship| {
             s.draw(ship);
+        }, |asteroid| {
+            a.draw(asteroid);
         });
+
+        //a.draw([200.0, 200.0, 8.0]);
+
     }
 
     pub fn pressed(&mut self, btn: &Button) {

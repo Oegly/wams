@@ -67,6 +67,8 @@ impl GameWrapper {
 
         self.game.render(|ship| {
             ShipSprite::draw(ctx, ship);
+        }, |asteroid| {
+            AsteroidSprite::draw(ctx, asteroid);
         });
 
         write_status(ctx, self.game.get_score(), self.game.get_player_health().ceil() as u32 );

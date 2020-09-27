@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::ai::*;
+use crate::asteroid::*;
 use crate::broadcast::*;
 use crate::physics::*;
 use crate::shape::*;
@@ -61,9 +62,9 @@ impl Ship {
         )
     }
 
-    pub fn get_elasticity(&self, rad: f64) -> f64 {
+    pub fn get_elasticity(&self) -> f64 {
         // Todo: Make it possible to do something different with elasticity
-        0.9 - f64::abs(self.direction - rad) / 400.0
+        2.0/3.0
     }
 
     pub fn aim(&mut self, point: Point) {
@@ -112,7 +113,7 @@ impl Ship {
         }
     }
 
-    pub fn check_collisions(&mut self, time_delta: f64, actors: &HashMap<u32, ShipCache>) -> bool {
+    pub fn check_collisions(&mut self, time_delta: f64, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) -> bool {
         let mut collision = false;
         let trajectory = self.get_trajectory_bounds(time_delta);
 
@@ -123,44 +124,66 @@ impl Ship {
                     collision = true;
 
                     //println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
-                    self.collision_bounce(actor);
+                    self.collision_bounce(actor.circle, actor.vector, actor.elasticity);
+            }
+        }
+
+        for prop in props.iter() {
+            let circle = prop.get_circle();
+
+            if trajectory.check_collision_shape(&circle) &&
+                self.circle.check_collision_circle(&circle) {
+                collision = true;
+
+                //println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
+                self.collision_bounce(circle, Vector::empty(), prop.get_elasticity());
             }
         }
 
         collision
     }
 
-    pub fn collision_bounce(&mut self, ship: &ShipCache) {
-        let dx = self.circle.get_x() - ship.circle.get_x();
-        let dy = self.circle.get_y() - ship.circle.get_y();
+    pub fn collision_bounce(&mut self, circle: Circle, vector: Vector, elasticity: f64) {
+        let op = Point::new(self.circle.x, self.circle.y);
+        let dx = self.circle.get_x() - circle.get_x();
+        let dy = self.circle.get_y() - circle.get_y();
+
+        let goal_a = Point::new(self.vector.get_dx(), self.vector.get_dy());
+        let goal_b = Point::new(vector.get_dx(), vector.get_dy());
+        let difference = goal_a.distance(goal_b);
 
         // Move out of the other ship before changing trajectory
         // We overcompensate slightly to avoid ships sticking to each other
         self.circle.move_by_vector(Vector {
             direction: dx.atan2(dy),
-            magnitude: (self.circle.get_r() + ship.circle.get_r() - dx.hypot(dy)) * 1.2
+            magnitude: (self.circle.get_r() + circle.get_r() - dx.hypot(dy)) * 1.2
         });
 
+        /*
         // Change trajectory according to the angle of the collision
-        //self.vector.rotate(f64::atan2(dx, dy) + FRAC_PI_2);
-        let old_magnitude = self.vector.magnitude;
-        let mut vector_delta = ship.vector.clone();
+        self.vector.rotate(f64::atan2(dx, dy) + FRAC_PI_2);
+        self.vector.magnitude *= 2.0/3.0;
+        self.vector.magnitude = difference * self.get_elasticity() * elasticity;
+        */
+
+        let mut vector_delta = vector.clone();
         vector_delta.subtract_vector(self.vector);
         self.vector.add_vector(vector_delta);
-        self.vector.magnitude *= 2.0/3.0;
+        self.vector.magnitude *= self.get_elasticity();
+        //self.vector.magnitude += difference * elasticity;
 
         // Take damage
-        self.health -= (self.vector.magnitude - old_magnitude).abs() / 10.0;
+        self.health -= difference / 20.0;
 
         //println!("Ship #{:} has {:.2} HP left after taking {:.2} damage.", self.id, self.health,
         //(self.vector.magnitude - old_magnitude).abs() / 10.0);
     }
 
-    pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) {
+    pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) {
         // Store state before collisions
         let alive = self.health > 0.0;
 
-        self.check_collisions(time_delta, actors);
+        self.check_collisions(time_delta, actors, props);
         self.abide_physics(time_delta);
 
         if self.health <= 0.0 {
@@ -191,7 +214,8 @@ impl Ship {
             health: self.health,
             direction: self.direction,
             force: self.force,
-            trajectory: self.get_trajectory_bounds(1.0/60.0),
+            elasticity: self.get_elasticity(),
+            trajectory: self.get_trajectory_bounds(time_delta),
         }
     }
 }
@@ -305,6 +329,7 @@ pub struct ShipCache {
     pub health: f64,
     pub direction: f64,
     pub force: f64,
+    pub elasticity: f64,
     pub trajectory: Rectangle,
 }
 

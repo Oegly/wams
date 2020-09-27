@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 pub mod ai;
+pub mod asteroid;
 pub mod game;
 pub mod physics;
 pub mod ship;

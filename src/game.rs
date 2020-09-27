@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::asteroid::*;
 use crate::broadcast::*;
 use crate::physics::*;
 use crate::shape::*;
@@ -14,6 +15,7 @@ pub struct Game {
     score: u32,
     spawner: ShipSpawner,
     mobs: Vec<Ship>,
+    asteroids: Vec<Asteroid>,
     ship_count: u32,
     cached_actors: HashMap<u32, ShipCache>,
     broadcast: Broadcast,
@@ -30,6 +32,7 @@ impl Game {
             score: 0,
             spawner: ShipSpawner::new(),
             mobs: Vec::new(),
+            asteroids: vec![Asteroid::new(200.0, 200.0, 20.0), Asteroid::new(400.0, 400.0, 8.0)],
             ship_count: 1,
             cached_actors: HashMap::new(),
             broadcast: Broadcast::new(),
@@ -63,20 +66,24 @@ impl Game {
         self.broadcast.record_actors(&self.cached_actors, Some(self.player.get_id()));
 
         //self.player.add_inputs(self.broadcast.input.to_vec());
-        self.player.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
+        self.player.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors, &self.asteroids);
 
         for mob in self.mobs.iter_mut() {
-            mob.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors);
+            mob.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors, &self.asteroids);
         }
 
         true
     }
 
-    pub fn render<F: Fn(&ShipCache) -> ()>(&mut self, draw: F) {
+    pub fn render<F: Fn(&ShipCache) -> (), G: Fn(&Asteroid)>(&mut self, draw_ship: F, draw_asteroid: G) {
         //clear(); //r.clear();
 
         for (id, ship) in self.cached_actors.iter() {
-            draw(&ship);
+            draw_ship(&ship);
+        }
+
+        for asteroid in self.asteroids.iter() {
+            draw_asteroid(&asteroid)
         }
     }
 

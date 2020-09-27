@@ -9,6 +9,7 @@ use piston::input::*;
 use opengl_graphics::{GlGraphics, OpenGL};
 
 use crate::physics::*;
+use crate::asteroid::*;
 use crate::ship::*;
 use crate::game::*;
 
@@ -86,6 +87,31 @@ impl ShipSprite {
             //graphics::line(wing_color, 1.0, [_x, _y, px, py], c.transform, gl);
 
             //graphics::rectangle([1.0, 1.0, 1.0, 0.4], ship.trajectory.render_piston(), c.transform, gl);
+        });
+    }
+}
+
+pub struct AsteroidSprite {
+    gl: Rc<RefCell<GlGraphics>>,
+    args: RenderArgs,
+}
+
+impl AsteroidSprite {
+    pub fn new(gl: Rc<RefCell<GlGraphics>>, args: RenderArgs) -> AsteroidSprite {
+        AsteroidSprite {
+            gl: gl,
+            args: args,
+        }
+    }
+
+    pub fn draw(&self, asteroid: &Asteroid) {
+        use graphics::Transformed;
+
+        let [_x, _y, _r] = asteroid.render_piston();
+
+        self.gl.borrow_mut().draw(self.args.viewport(), |c, gl| {
+            let body = [_x - _r, _y - _r, _r * 2.0, _r * 2.0];
+            graphics::ellipse([0.4, 0.4, 0.4, 1.0], body, c.transform, gl);
         });
     }
 }
