@@ -205,6 +205,7 @@ impl std::fmt::Display for Ship {
     }
 }
 
+#[derive(Clone,Debug)]
 pub struct ShipBuilder {
     id: u32,
     category: ShipCategory,

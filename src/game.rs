@@ -4,6 +4,7 @@ use crate::broadcast::*;
 use crate::physics::*;
 use crate::shape::*;
 use crate::ship::*;
+use crate::spawner::*;
 
 const UPS: u64 = 60;
 
@@ -11,6 +12,7 @@ pub struct Game {
     tick: u64,
     player: Ship,
     score: u32,
+    spawner: ShipSpawner,
     mobs: Vec<Ship>,
     ship_count: u32,
     cached_actors: HashMap<u32, ShipCache>,
@@ -26,6 +28,7 @@ impl Game {
             tick: 0,
             player: factory.new_bell(400.0, 350.0),
             score: 0,
+            spawner: ShipSpawner::new(),
             mobs: Vec::new(),
             ship_count: 1,
             cached_actors: HashMap::new(),
@@ -37,11 +40,9 @@ impl Game {
     pub fn update(&mut self, pressed: &Vec<char>, cursor: &Point) -> bool {
         self.tick += 1;
 
-        if self.tick % 360 == 0 {
-            self.create_ship();
-        }
+        self.spawner.act(&self.broadcast);
 
-        self.broadcast.update();
+        self.broadcast.update(self.tick);
 
         self.read_messages();
 
@@ -87,26 +88,11 @@ impl Game {
         self.cached_actors[&self.player.get_id()].health
     }
 
-    fn create_ship(&mut self) {
-        let m = 600.0;
-        let d = (self.tick as f64 / 360.0 ) % TAU;
-        let v = Vector::new(d, m);
-        let [x, y] = [v.get_dx(), v.get_dy()];
-
-        let mut cat: ShipCategory;
-
-        if self.tick % 1080 == 0 {
-            cat = ShipCategory::Cayenne;
-        } else {
-            cat = ShipCategory::Jalapeno;
-        }
-
+    fn create_ship(&mut self, ship: ShipBuilder) {
         self.ship_count += 1;
         
-        self.mobs.push(
-            ShipBuilder::new(cat).place(x + 512.0, y + 384.0).tag(self.ship_count).build()
-        );
-}
+        self.mobs.push(ship.tag(self.ship_count).build());
+    }
 
     fn read_messages(&mut self) {
         let messages = self.broadcast.messages.iter()
@@ -117,6 +103,7 @@ impl Game {
         for msg in messages {
             match msg.body {
                 MessageBody::Death => self.process_death(msg.sender),
+                MessageBody::Birth(ship) => self.create_ship(ship),
                 _ => ()
             }
         }

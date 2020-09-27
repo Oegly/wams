@@ -6,6 +6,7 @@ use crate::shape::*;
 use crate::ship::*;
 
 pub struct Broadcast {
+    pub tick: u64,
     pub cursor: Point,
     pub input: Vec<char>,
     pub player_id: Option<u32>,
@@ -17,6 +18,7 @@ pub struct Broadcast {
 impl Broadcast {
     pub fn new() -> Broadcast {
         Broadcast {
+            tick: 0,
             cursor: Point::new(0.0, 0.0),
             input: Vec::new(),
             player_id: None,
@@ -26,7 +28,8 @@ impl Broadcast {
         }
     }
 
-    pub fn update(&mut self) {
+    pub fn update(&mut self, tick: u64) {
+        self.tick = tick;
         self.messages = self.outbox.replace(Vec::new());
     }
 
@@ -59,7 +62,7 @@ impl Broadcast {
     }
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Debug)]
 pub struct Message {
     pub recipient: u32,
     pub sender: u32,
@@ -76,8 +79,9 @@ impl Message {
     }
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Debug)]
 pub enum MessageBody {
+    Birth(ShipBuilder),
     Death,
     Collison(Vector)
 }
