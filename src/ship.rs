@@ -18,9 +18,10 @@ pub enum ShipCategory {
     Cayenne = 2,
 }
 
-const RADIUS: [f64; 3] = [18.0, 18.0, 18.0];
+const RADIUS: [f64; 3] = [18.0, 16.0, 20.0];
 const HEALTH: [f64; 3] = [100.0, 25.0, 200.0];
 const FORCE: [f64; 3] = [80.0, 24.0, 16.0];
+const MASS: [f64; 3] = [1.0, 0.8, 1.2];
 
 #[derive(Clone,Debug)]
 pub struct Ship {
@@ -32,6 +33,8 @@ pub struct Ship {
     health: f64,
     direction: f64,
     force: f64,
+    mass: f64,
+    elasticity: f64,
 }
 
 impl Ship {
@@ -60,11 +63,6 @@ impl Ship {
             self.circle.bottom() + (self.vector.get_dy() * time_delta).max(0.0),
             self.circle.left() + (self.vector.get_dx() * time_delta).min(0.0)
         )
-    }
-
-    pub fn get_elasticity(&self) -> f64 {
-        // Todo: Make it possible to do something different with elasticity
-        2.0/3.0
     }
 
     pub fn aim(&mut self, point: Point) {
@@ -124,7 +122,7 @@ impl Ship {
                     collision = true;
 
                     //println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
-                    self.collision_bounce(actor.circle, actor.vector, actor.elasticity);
+                    self.collision_bounce(actor.circle, actor.vector, actor.elasticity, actor.mass);
             }
         }
 
@@ -136,47 +134,34 @@ impl Ship {
                 collision = true;
 
                 //println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
-                self.collision_bounce(circle, Vector::empty(), prop.get_elasticity());
+                self.collision_bounce(circle, Vector::empty(), prop.get_elasticity(), f64::powf(2.0, 63.0)-1.0);
             }
         }
 
         collision
     }
 
-    pub fn collision_bounce(&mut self, circle: Circle, vector: Vector, elasticity: f64) {
-        let op = Point::new(self.circle.x, self.circle.y);
+    pub fn collision_bounce(&mut self, circle: Circle, vector: Vector, elasticity: f64, mass: f64) {
         let dx = self.circle.get_x() - circle.get_x();
         let dy = self.circle.get_y() - circle.get_y();
-
-        let goal_a = Point::new(self.vector.get_dx(), self.vector.get_dy());
-        let goal_b = Point::new(vector.get_dx(), vector.get_dy());
-        let difference = goal_a.distance(goal_b);
 
         // Move out of the other ship before changing trajectory
         // We overcompensate slightly to avoid ships sticking to each other
         self.circle.move_by_vector(Vector {
             direction: dx.atan2(dy),
-            magnitude: (self.circle.get_r() + circle.get_r() - dx.hypot(dy)) * 1.2
+            magnitude: (self.circle.get_r() + circle.get_r() - dx.hypot(dy)) * 1.5
         });
 
-        /*
-        // Change trajectory according to the angle of the collision
+        // Find the force relative to ourself
+        let mut adjusted_collision = vector.clone();
+        adjusted_collision.rotate(self.vector.radian_delta(FRAC_PI_2));
+        let collision_force = adjusted_collision.get_dx() * mass.min(1.0) * elasticity;
+
+        self.vector.magnitude += collision_force / self.mass;
+        self.vector.magnitude *= self.elasticity;
+
+        // Find correct angle
         self.vector.rotate(f64::atan2(dx, dy) + FRAC_PI_2);
-        self.vector.magnitude *= 2.0/3.0;
-        self.vector.magnitude = difference * self.get_elasticity() * elasticity;
-        */
-
-        let mut vector_delta = vector.clone();
-        vector_delta.subtract_vector(self.vector);
-        self.vector.add_vector(vector_delta);
-        self.vector.magnitude *= self.get_elasticity();
-        //self.vector.magnitude += difference * elasticity;
-
-        // Take damage
-        self.health -= difference / 20.0;
-
-        //println!("Ship #{:} has {:.2} HP left after taking {:.2} damage.", self.id, self.health,
-        //(self.vector.magnitude - old_magnitude).abs() / 10.0);
     }
 
     pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) {
@@ -214,7 +199,8 @@ impl Ship {
             health: self.health,
             direction: self.direction,
             force: self.force,
-            elasticity: self.get_elasticity(),
+            mass: self.mass,
+            elasticity: self.elasticity,
             trajectory: self.get_trajectory_bounds(time_delta),
         }
     }
@@ -278,6 +264,8 @@ impl ShipBuilder {
             health: HEALTH[cat],
             direction: PI,
             force: FORCE[cat],
+            mass: MASS[cat],
+            elasticity: 2.0/3.0,
         }
     }
 }
@@ -329,6 +317,7 @@ pub struct ShipCache {
     pub health: f64,
     pub direction: f64,
     pub force: f64,
+    pub mass: f64,
     pub elasticity: f64,
     pub trajectory: Rectangle,
 }
