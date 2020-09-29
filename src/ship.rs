@@ -18,6 +18,17 @@ pub enum ShipCategory {
     Cayenne = 2,
 }
 
+impl From<u8> for ShipCategory {
+    fn from(u: u8) -> ShipCategory {
+        match u {
+            0 => ShipCategory::Bell,
+            1 => ShipCategory::Jalapeno,
+            2 => ShipCategory::Cayenne,
+            _ => ShipCategory::Bell,
+        }
+    }
+}
+
 const RADIUS: [f64; 3] = [18.0, 16.0, 20.0];
 const HEALTH: [f64; 3] = [100.0, 25.0, 200.0];
 const FORCE: [f64; 3] = [80.0, 24.0, 16.0];

@@ -4,19 +4,24 @@ extern crate opengl_graphics;
 extern crate piston;
 
 use std::cell::RefCell;
-use std::rc::Rc;
 use std::collections::HashMap;
-use piston::window::WindowSettings;
-use piston::event_loop::*;
-use piston::input::*;
+use std::fs::File;
+use std::io::BufReader;
+use std::io::prelude::*;
+use std::rc::Rc;
+
 use glutin_window::GlutinWindow;
 use opengl_graphics::{GlGraphics, OpenGL};
+use piston::event_loop::*;
+use piston::input::*;
+use piston::window::WindowSettings;
 
 use crate::broadcast::*;
 use crate::game::*;
+use crate::piston_bindings::screen::*;
 use crate::shape::*;
 use crate::ship::*;
-use crate::piston_bindings::screen::*;
+use crate::storage::*;
 
 const OPENGL_VERSION: glutin_window::OpenGL = OpenGL::V3_2;
 const BG_COLOR: [f32; 4] = [0.6, 0.6, 0.8, 1.0];
@@ -30,21 +35,12 @@ struct GameWrapper {
 
 impl GameWrapper {
     pub fn new() -> GameWrapper {
-        let mut factory = ShipFactory::new();
-        let player = factory.new_bell(400.0, 350.0);
-        let mut mobs: Vec<Ship> = Vec::new();
-
-        for i in 0..4 {
-            mobs.push(factory.new_jalapeno(160.0 + 160.0 * i as f64, 100.0));
-            mobs.push(factory.new_jalapeno(160.0 + 160.0 * i as f64, 600.0));
-        }
-
-        mobs.push(factory.new_cayenne(160.0, 350.0));
-        mobs.push(factory.new_cayenne(640.0, 350.0));
-        mobs.push(factory.new_cayenne(400.0, 600.0));
-
+        let mut content = String::new();
+        let mut file = File::open("data/game.json").expect("File not found.");
+        BufReader::new(file).read_to_string(&mut content);
+        
         GameWrapper {
-            game: Game::new(player, mobs),
+            game: Game::from_json(content).expect("Invalid JSON."),
             inputs: Inputs::new(),
             gl: Rc::new(RefCell::new(GlGraphics::new(OPENGL_VERSION))),
         }

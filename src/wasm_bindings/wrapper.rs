@@ -10,6 +10,7 @@ use wasm_bindgen::JsCast;
 use crate::game::*;
 use crate::ship::*;
 use crate::shape::*;
+use crate::storage::*;
 use crate::broadcast::*;
 use crate::wasm_bindings::screen::*;
 
@@ -32,22 +33,9 @@ pub struct GameWrapper {
 
 #[wasm_bindgen]
 impl GameWrapper {
-    pub fn new() -> GameWrapper {
-        let mut factory = ShipFactory::new();
-        let player = factory.new_bell(400.0, 350.0);
-        let mut mobs: Vec<Ship> = Vec::new();
-
-        for i in 0..4 {
-            mobs.push(factory.new_jalapeno(160.0 + 160.0 * i as f64, 100.0));
-            mobs.push(factory.new_jalapeno(160.0 + 160.0 * i as f64, 600.0));
-        }
-
-        mobs.push(factory.new_cayenne(160.0, 350.0));
-        mobs.push(factory.new_cayenne(640.0, 350.0));
-        mobs.push(factory.new_cayenne(400.0, 600.0));
-
+    pub fn new(s: String) -> GameWrapper {
         GameWrapper {
-            game: Game::new(player, mobs),
+            game: Game::from_json(s).expect("Invalid JSON."),
             inputs: Inputs::new(),
         }
     }

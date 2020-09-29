@@ -1,10 +1,13 @@
 use std::collections::HashMap;
+use serde::{Serialize,Deserialize};
+use serde_json::{Result, Value, Deserializer};
 
 use crate::asteroid::*;
 use crate::broadcast::*;
 use crate::physics::*;
 use crate::shape::*;
 use crate::ship::*;
+use crate::storage::*;
 use crate::spawner::*;
 
 const UPS: u64 = 60;
@@ -23,12 +26,16 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new(player: Ship, mobs: Vec<Ship>) -> Game {
+    pub fn new(
+        player: ShipArgs,
+        mobs: Vec<ShipArgs>,
+        asteroids: Vec<AsteroidArgs>
+    ) -> Game {
         let mut factory = ShipFactory::new();
 
-        Game {
+        let mut game = Game {
             tick: 0,
-            player: factory.new_bell(400.0, 350.0),
+            player: ShipBuilder::default().place(player.1, player.2).tag(1).build(),
             score: 0,
             spawner: ShipSpawner::new(),
             mobs: Vec::new(),
@@ -37,20 +44,38 @@ impl Game {
             cached_actors: HashMap::new(),
             broadcast: Broadcast::new(),
             pressed: Vec::new(),
+        };
+
+        for ship in mobs.iter() {
+            game.create_ship(ShipBuilder::new(ShipCategory::from(ship.0)).place(ship.1, ship.2))
         }
+
+        for asteroid in asteroids.iter() {
+            game.asteroids.push(Asteroid::new(asteroid.0, asteroid.1, asteroid.2))
+        }
+
+        game
+    }
+
+    pub fn from_json(s: String) -> Result<Game> {
+        let json: Value = serde_json::from_str(&s).unwrap();
+
+        let player: ShipArgs = serde_json::from_value(json["player"].clone())?;
+        let mobs: Vec<ShipArgs> = serde_json::from_value(json["mobs"].clone())?;
+        let asteroids: Vec<AsteroidArgs> = serde_json::from_value(json["asteroids"].clone())?;
+        
+        Ok(Game::new(player, mobs, asteroids))
     }
 
     pub fn update(&mut self, pressed: &Vec<char>, cursor: &Point) -> bool {
         self.tick += 1;
 
-        self.spawner.act(&self.broadcast);
-
         self.broadcast.update(self.tick);
-
-        self.read_messages();
-
         self.broadcast.set_pressed(pressed);
         self.broadcast.move_cursor(cursor);
+        self.read_messages();
+
+        self.spawner.act(&self.broadcast);
 
         // Flush cache
         self.cached_actors.clear();

@@ -65,32 +65,39 @@ const update = (game, clock) => {
 };
 
 const init = (m) => {
-  game = m.start();
+  fetch("./data/game.json")
+   .then(response => response.text())
+   .then(text => {
+     let s = text;
+     
+     console.log(s);
+     let game = m.start(s);
 
-  window.addEventListener("resize", () => resizeCanvas(game));
+    window.addEventListener("resize", () => resizeCanvas(game));
 
-  document.addEventListener("mousedown", (event) => {
-    game.mouse_pressed();
+    document.addEventListener("mousedown", (event) => {
+      game.mouse_pressed();
+    });
+
+    document.addEventListener("mouseup", (event) => {
+      game.mouse_released();
+    });
+
+    document.addEventListener("keydown", (event) => {
+      game.pressed(event.keyCode);
+    });
+
+    document.addEventListener("keyup", (event) => {
+      game.released(event.keyCode);
+    });
+
+    document.addEventListener("mousemove", (event) => {
+      game.cursor_moved(event.layerX, event.layerY);
+    });
+
+    //var clock = new Clock(1000/60);
+    update(game, new Clock(1000/60));
   });
-
-  document.addEventListener("mouseup", (event) => {
-    game.mouse_released();
-  });
-
-  document.addEventListener("keydown", (event) => {
-    game.pressed(event.keyCode);
-  });
-
-  document.addEventListener("keyup", (event) => {
-    game.released(event.keyCode);
-  });
-
-  document.addEventListener("mousemove", (event) => {
-    game.cursor_moved(event.layerX, event.layerY);
-  });
-
-  //var clock = new Clock(1000/60);
-  update(game, new Clock(1000/60));
 };
 
 rust
