@@ -5,6 +5,7 @@ use crate::asteroid::*;
 use crate::broadcast::*;
 use crate::physics::*;
 use crate::shape::*;
+use crate::storage::*;
 
 use std::f64::consts::{PI,FRAC_PI_2};
 
@@ -277,6 +278,17 @@ impl ShipBuilder {
             force: FORCE[cat],
             mass: MASS[cat],
             elasticity: 2.0/3.0,
+        }
+    }
+}
+
+impl From<&ShipArgs> for ShipBuilder {
+    fn from(s: &ShipArgs) -> ShipBuilder {
+        ShipBuilder {
+            id: 0,
+            category: ShipCategory::from(s.0),
+            pos: Point::new(s.1, s.2),
+            vector: Vector::from(s.3),
         }
     }
 }

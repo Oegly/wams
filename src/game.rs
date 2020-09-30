@@ -35,11 +35,11 @@ impl Game {
 
         let mut game = Game {
             tick: 0,
-            player: ShipBuilder::default().place(player.1, player.2).tag(1).build(),
+            player: ShipBuilder::from(&player).tag(1).build(),
             score: 0,
             spawner: ShipSpawner::new(),
             mobs: Vec::new(),
-            asteroids: vec![Asteroid::new(200.0, 200.0, 20.0), Asteroid::new(400.0, 400.0, 8.0)],
+            asteroids: Vec::new(),
             ship_count: 1,
             cached_actors: HashMap::new(),
             broadcast: Broadcast::new(),
@@ -47,7 +47,7 @@ impl Game {
         };
 
         for ship in mobs.iter() {
-            game.create_ship(ShipBuilder::new(ShipCategory::from(ship.0)).place(ship.1, ship.2))
+            game.create_ship(ShipBuilder::from(ship));
         }
 
         for asteroid in asteroids.iter() {

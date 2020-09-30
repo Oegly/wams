@@ -77,6 +77,12 @@ impl Vector {
     }
 }
 
+impl From<(f64, f64)> for Vector {
+    fn from(t: (f64, f64)) -> Vector {
+        Vector::new(t.0, t.1)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::f64::consts::{PI,FRAC_PI_2};
