@@ -25,24 +25,24 @@ impl Vector {
 
     pub fn from_deltas(dx: f64, dy: f64) -> Vector {
         Vector {
-            direction: dx.atan2(dy),
+            direction: dy.atan2(dx),
             magnitude: dx.hypot(dy),
         }
     }
 
     pub fn get_dx(&self) -> f64 {
-        self.direction.sin() * self.magnitude
+        self.direction.cos() * self.magnitude
     }
 
     pub fn get_dy(&self) -> f64 {
-        self.direction.cos() * self.magnitude
+        self.direction.sin() * self.magnitude
     }
 
     pub fn add_vector(&mut self, v: Vector) {
         let _x: f64 = self.get_dx() + v.get_dx();
         let _y: f64 = self.get_dy() + v.get_dy();
 
-        self.direction = _x.atan2(_y);
+        self.direction = _y.atan2(_x);
         self.magnitude = _x.hypot(_y);
     }
 
@@ -50,7 +50,7 @@ impl Vector {
         let _x: f64 = self.get_dx() - v.get_dx();
         let _y: f64 = self.get_dy() - v.get_dy();
 
-        self.direction = _x.atan2(_y);
+        self.direction = _y.atan2(_x);
         self.magnitude = _x.hypot(_y);
     }
 

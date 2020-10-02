@@ -6,6 +6,8 @@ use crate::asteroid::*;
 use crate::ship::*;
 use crate::wasm_bindings::*;
 
+use std::f64::consts::{PI,FRAC_PI_2};
+
 const FONT_COLOR: &str = "#444444";
 const HUD_COLOR: &str = "#666688";
 
@@ -42,20 +44,20 @@ impl ShipSprite {
         ctx.set_fill_style(&JsValue::from(&colors[1]));
 
         ctx.translate(x, y);
-        ctx.rotate(-ship.direction);
+        ctx.rotate(ship.direction + FRAC_PI_2);
 
         // Nozzle
         ctx.begin_path();
-        ctx.move_to(0.0 * r, 1.0 * r);
-        ctx.line_to(0.6 * r, -1.2 * r);
-        ctx.line_to(-0.6 * r, -1.2 * r);
+        ctx.move_to(0.0 * r, -1.0 * r);
+        ctx.line_to(-0.6 * r, 1.2 * r);
+        ctx.line_to(0.6 * r, 1.2 * r);
         ctx.fill();
 
         // Wings
         ctx.begin_path();
-        ctx.move_to(0.0 * r, 1.0 * r);
-        ctx.line_to(-1.5 * r, -0.4 * r);
-        ctx.line_to(1.5 * r, -0.4 * r);
+        ctx.move_to(0.0 * r, -1.0 * r);
+        ctx.line_to(1.5 * r, 0.4 * r);
+        ctx.line_to(-1.5 * r, 0.4 * r);
         ctx.fill();
 
         ctx.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);

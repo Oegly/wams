@@ -13,6 +13,8 @@ use crate::asteroid::*;
 use crate::ship::*;
 use crate::game::*;
 
+use std::f64::consts::{PI,FRAC_PI_2};
+
 const BG_COLOR: [f32; 4] = [0.6, 0.6, 0.8, 1.0];
 
 fn get_pallette(category: ShipCategory) -> [[f32; 4]; 2]{
@@ -70,13 +72,13 @@ impl ShipSprite {
 
         self.gl.borrow_mut().draw(self.args.viewport(), |c, gl| {
             let body = [_x - _r, _y - _r, _r * 2.0, _r * 2.0];
-            let wing = [[0.0, 1.0], [1.5, -0.4], [-1.5, -0.4]];
-            let nozzle = [[0.0, 1.0], [0.6, -1.2], [-0.6, -1.2]];
+            let wing = [[0.0, -1.0], [-1.5, 0.4], [1.5, 0.4]];
+            let nozzle = [[0.0, -1.0], [-0.6, 1.2], [0.6, 1.2]];
 
             let transform = c
                 .transform
                 .trans(_x, _y)
-                .rot_rad(-_d)
+                .rot_rad(_d + FRAC_PI_2)
                 .scale(_r, _r);
 
             graphics::polygon(wing_color, &nozzle, transform, gl);

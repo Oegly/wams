@@ -133,7 +133,7 @@ impl Segment {
     }
 
     pub fn get_direction(&self) -> f64 {
-        self.get_dx().atan2(self.get_dy())
+        self.get_dy().atan2(self.get_dx())
     }
 
     pub fn get_length(&self) -> f64 {

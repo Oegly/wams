@@ -78,10 +78,10 @@ impl Ship {
     }
 
     pub fn aim(&mut self, point: Point) {
-        let dx = self.get_x() - point.x;
-        let dy = self.get_y() - point.y;
+        let dx = point.x - self.get_x();
+        let dy = point.y - self.get_y();
 
-        self.direction = f64::atan2(-dx, -dy);
+        self.direction = dy.atan2(dx);
     }
 
     pub fn thrust(&mut self, m: f64) {
@@ -160,7 +160,7 @@ impl Ship {
         // Move out of the other ship before changing trajectory
         // We overcompensate slightly to avoid ships sticking to each other
         self.circle.move_by_vector(Vector {
-            direction: dx.atan2(dy),
+            direction: dy.atan2(dx),
             magnitude: (self.circle.get_r() + circle.get_r() - dx.hypot(dy)) * 1.5
         });
 
@@ -173,7 +173,7 @@ impl Ship {
         self.vector.magnitude *= self.elasticity;
 
         // Find correct angle
-        self.vector.rotate(f64::atan2(dx, dy) + FRAC_PI_2);
+        self.vector.rotate(dy.atan2(dx) + FRAC_PI_2);
     }
 
     pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) {

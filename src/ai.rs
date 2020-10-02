@@ -67,10 +67,10 @@ impl Brain for BellBrain {
             let mut ret = Vec::<Directive>::new();
 
             if pressed.contains(&'L') {
-                ret.push(Directive::Rotate(TAU * time_delta));
+                ret.push(Directive::Rotate(-TAU * time_delta));
             }
             if pressed.contains(&'R') {
-                ret.push(Directive::Rotate(-TAU * time_delta));
+                ret.push(Directive::Rotate(TAU * time_delta));
             }
             if pressed.contains(&'T') {
                 ret.push(Directive::Thrust(1.0 * time_delta));
