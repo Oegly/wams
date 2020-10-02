@@ -159,21 +159,28 @@ impl Ship {
 
         // Move out of the other ship before changing trajectory
         // We overcompensate slightly to avoid ships sticking to each other
-        self.circle.move_by_vector(Vector {
-            direction: dy.atan2(dx),
-            magnitude: (self.circle.get_r() + circle.get_r() - dx.hypot(dy)) * 1.5
-        });
+        let phi = dy.atan2(dx);
+        let mut collision_vector = Vector::new(
+            phi, (self.circle.get_r() + circle.get_r() - dx.hypot(dy)) * 2.0
+        );
+        self.circle.move_by_vector(collision_vector);
 
-        // Find the force relative to ourself
-        let mut adjusted_collision = vector.clone();
-        adjusted_collision.rotate(self.vector.radian_delta(FRAC_PI_2));
-        let collision_force = adjusted_collision.get_dx() * mass.min(1.0) * elasticity;
+        // Shorter names for visibility
+        let [v1, r1, m1] = [self.vector.magnitude, self.vector.direction, self.mass];
+        let [v2, r2, m2] = [vector.magnitude * elasticity, vector.direction, mass];
 
-        self.vector.magnitude += collision_force / self.mass;
+        // Calculate new vector
+        let a = v1 * ((r1 - phi).cos() *(m1 - m2));
+        let b = (2.0 * m2 * v2 * (r2 - phi).cos());
+        let base = (a + b) / (m1 + m2);
+        let vx = (base * phi.cos()) + (v1 * (r1 - phi).sin() * (phi + FRAC_PI_2).cos());
+        let vy = (base * phi.sin()) + (v1 * (r1 - phi).sin() * (phi + FRAC_PI_2).sin());
+
+        self.vector = Vector::from_deltas(vx, vy);
         self.vector.magnitude *= self.elasticity;
 
-        // Find correct angle
-        self.vector.rotate(dy.atan2(dx) + FRAC_PI_2);
+        // Take damage
+        self.health -= base / 10.0;
     }
 
     pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) {
