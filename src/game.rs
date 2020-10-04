@@ -29,7 +29,8 @@ impl Game {
     pub fn new(
         player: ShipArgs,
         mobs: Vec<ShipArgs>,
-        asteroids: Vec<AsteroidArgs>
+        asteroids: Vec<AsteroidArgs>,
+        spawner: bool,
     ) -> Game {
         let mut factory = ShipFactory::new();
 
@@ -37,7 +38,7 @@ impl Game {
             tick: 0,
             player: ShipBuilder::from(&player).tag(1).build(),
             score: 0,
-            spawner: ShipSpawner::new(),
+            spawner: ShipSpawner::new(spawner),
             mobs: Vec::new(),
             asteroids: Vec::new(),
             ship_count: 1,
@@ -63,8 +64,9 @@ impl Game {
         let player: ShipArgs = serde_json::from_value(json["player"].clone())?;
         let mobs: Vec<ShipArgs> = serde_json::from_value(json["mobs"].clone())?;
         let asteroids: Vec<AsteroidArgs> = serde_json::from_value(json["asteroids"].clone())?;
-        
-        Ok(Game::new(player, mobs, asteroids))
+        let spawner = serde_json::from_value(json["spawner"].clone())?;
+
+        Ok(Game::new(player, mobs, asteroids, spawner))
     }
 
     pub fn update(&mut self, pressed: &Vec<char>, cursor: &Point) -> bool {

@@ -24,7 +24,7 @@ use crate::ship::*;
 use crate::storage::*;
 
 const OPENGL_VERSION: glutin_window::OpenGL = OpenGL::V3_2;
-const BG_COLOR: [f32; 4] = [0.6, 0.6, 0.8, 1.0];
+const BG_COLOR: [f32; 4] = [0.9, 0.9, 0.9, 1.0];
 const UPS: u64 = 60;
 
 struct GameWrapper {
@@ -35,8 +35,15 @@ struct GameWrapper {
 
 impl GameWrapper {
     pub fn new() -> GameWrapper {
+        let args: Vec<String> = std::env::args().collect();
+        let filename = match args.get(1) {
+            Some(s) => format!("data/{}.json", s.to_string()),
+            None => "data/game.json".to_string()
+        };
+
+        println!("{}", filename);
         let mut content = String::new();
-        let mut file = File::open("data/game.json").expect("File not found.");
+        let mut file = File::open(&filename).expect(&format!("File {} not found.", &filename));
         BufReader::new(file).read_to_string(&mut content);
         
         GameWrapper {

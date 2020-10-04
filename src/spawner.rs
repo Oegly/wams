@@ -2,16 +2,19 @@ use crate::broadcast::*;
 use crate::physics::*;
 use crate::ship::*;
 
-pub struct ShipSpawner {}
+pub struct ShipSpawner {
+    active: bool,
+}
 
 impl ShipSpawner {
-    pub fn new() -> ShipSpawner {
+    pub fn new(a: bool) -> ShipSpawner {
         ShipSpawner {
+            active: a,
         }
     }
 
     pub fn act(&self, cast: &Broadcast) {
-        if cast.tick % 360 == 0 {
+        if self.active && cast.tick % 360 == 0 {
             self.create_ship(cast);
         }
     }
