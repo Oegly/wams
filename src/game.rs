@@ -102,15 +102,13 @@ impl Game {
         true
     }
 
-    pub fn render<F: Fn(&ShipCache) -> (), G: Fn(&Asteroid)>(&mut self, draw_ship: F, draw_asteroid: G) {
-        //clear(); //r.clear();
-
+    pub fn render<S: Screen>(&mut self, screen: &S) {
         for (id, ship) in self.cached_actors.iter() {
-            draw_ship(&ship);
+            screen.draw_ship(&ship);
         }
 
         for asteroid in self.asteroids.iter() {
-            draw_asteroid(&asteroid)
+            screen.draw_asteroid(&asteroid)
         }
     }
 
@@ -159,4 +157,10 @@ impl Game {
 
         println!("Ship #{} was killed. New score: {}", id, self.score);
     }
+}
+
+pub trait Screen {
+    //fn set_camera(&mut self, camera: &Camera);
+    fn draw_ship(&self, ship: &ShipCache);
+    fn draw_asteroid(&self, asteroid: &Asteroid);
 }
