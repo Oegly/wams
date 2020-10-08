@@ -12,16 +12,18 @@ const ctx = canvas.getContext("2d");
 document.body.appendChild(canvas);
 
 const resizeCanvas = () => {
-  console.log(ctx);
+  let chunkX = window.innerWidth / 4;
+  let chunkY = window.innerHeight / 3;
 
-  if (window.innerHeight / window.innerWidth < 0.75) {
-    canvas.height = (window.innerWidth / 4) * 3;
-
+  if (chunkX <= chunkY) {
+    canvas.width = window.innerWidth;
+    canvas.height = chunkX * 3;
   } else {
-    canvas.width = (window.innerHeight / 3) * 4;
+    canvas.width = chunkY * 4;
+    canvas.height = window.innerHeight;
   }
 
-  ctx.scale(1920 / canvas.width, 1080 / canvas.height);
+  //ctx.scale(1024 / canvas.width, 768 / canvas.height);
   console.log(ctx.scaleWidth, ctx.scaleHeight);
 };
 
@@ -43,7 +45,13 @@ class Clock {
 
     this.tick_count += 1;
 
-    return 1000/60 - (performance.now() - this.last);
+    let now = performance.now();
+    let nap = 1000/60 - (now - this.last);
+    this.last = now;
+    this.sleep += nap;
+    
+    //console.log(now - this.last);
+    return nap;
   }
 
   speak() {
@@ -60,45 +68,43 @@ const update = (game, clock) => {
     window.requestAnimationFrame(() => game.render(ctx));
     window.setTimeout(() => update(game, clock), clock.tick());
   } else {
+    game.clock.speak();
     console.log("u ded");
   }
 };
 
-const init = (m) => {
-  fetch("./data/game.json")
-   .then(response => response.text())
-   .then(text => {
-     let s = text;
-     
-     console.log(s);
-     let game = m.start(s);
+async function init(m) {
+  let p = new URLSearchParams(window.location.search);
+  let level = p.has("level") ? p.get("level") : "game";
+  let s = await fetch("./data/" + level + ".json").then(r => r.text());
 
-    window.addEventListener("resize", () => resizeCanvas(game));
+  let game = m.start(s);
 
-    document.addEventListener("mousedown", (event) => {
-      game.mouse_pressed();
-    });
+  window.addEventListener("resize", () => resizeCanvas(game));
 
-    document.addEventListener("mouseup", (event) => {
-      game.mouse_released();
-    });
-
-    document.addEventListener("keydown", (event) => {
-      game.pressed(event.keyCode);
-    });
-
-    document.addEventListener("keyup", (event) => {
-      game.released(event.keyCode);
-    });
-
-    document.addEventListener("mousemove", (event) => {
-      game.cursor_moved(event.layerX, event.layerY);
-    });
-
-    //var clock = new Clock(1000/60);
-    update(game, new Clock(1000/60));
+  document.addEventListener("mousedown", (event) => {
+    game.mouse_pressed();
   });
-};
+
+  document.addEventListener("mouseup", (event) => {
+    game.mouse_released();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    game.pressed(event.keyCode);
+  });
+
+  document.addEventListener("keyup", (event) => {
+    game.released(event.keyCode);
+  });
+
+  document.addEventListener("mousemove", (event) => {
+    game.cursor_moved(event.layerX, event.layerY);
+  });
+
+  //var clock = new Clock(1000/60);
+  update(game, new Clock(1000/60));
+}
 
 rust
   .then(m => init(m))
