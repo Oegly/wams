@@ -2,56 +2,13 @@ use crate::physics::*;
 
 const POINT_EPSILON: f64 = 0.01;
 
-fn check_collision_point_point(a: &Point, b: &Point) -> bool {
-    (a.get_x() - b.get_x()).abs() >= POINT_EPSILON &&
-    (a.get_y() - b.get_y()).abs() >= POINT_EPSILON
-}
-
-fn check_collision_point_segment(point: &Point, segment: &Segment) -> bool {
-    let distance = point.distance(segment.point0) + point.distance(segment.point1);
-    (segment.get_length() - distance).abs() <= POINT_EPSILON
-}
-
-fn check_collision_point_circle(point: &Point, circle: &Circle) -> bool {
-    point.distance(Point::new(circle.x, circle.y)) < circle.r
-}
-
-fn check_collision_segment_circle(segment: &Segment, circle: &Circle) -> bool {
-    if circle.check_collision_point(&segment.point0) || circle.check_collision_point(&segment.point1) {
-        return true;
-    }
-
-    let dot = (((circle.x - segment.point0.x) * (segment.point1.x - segment.point0.x)) +
-               ((circle.y - segment.point0.y) * (segment.point1.y - segment.point0.y))) /
-        segment.get_length().powf(2.0);
-
-    let p = Point::new(
-        segment.point0.x + dot * (segment.point1.x - segment.point0.x),
-        segment.point0.y + dot * (segment.point1.y - segment.point0.y)
-    );
-
-    circle.check_collision_point(&p) && segment.check_collision_point(&p)
-}
-
-fn check_collison_circle_circle(a: &Circle, b: &Circle) -> bool {
-    let dx = a.get_x() - b.get_x();
-    let dy = a.get_y() - b.get_y();
-
-    let distance = dx.hypot(dy);
-
-    if distance < a.get_r() + b.get_r() {
-        return true;
-    }
-
-    false
-}
-
 pub trait Shape {
     fn top(&self) -> f64;
     fn right(&self) -> f64;
     fn bottom(&self) -> f64;
     fn left(&self) -> f64;
 
+    fn check_collision_point(&self, point: &Point) -> bool;
     fn check_collision_rectangle(&self, rect: &Rectangle) -> bool;
     fn check_collision_circle(&self, circle: &Circle) -> bool;
 
@@ -81,7 +38,6 @@ impl Point {
         }
     }
 
-    //<(f64, f64)>
     pub fn from(t: (f64, f64)) -> Point {
         Point::new(t.0, t.1)
     }
@@ -96,6 +52,15 @@ impl Point {
 
     pub fn distance(&self, point: Point) -> f64 {
         (self.x - point.x).abs().hypot((self.y - point.y).abs())
+    }
+
+    pub fn add(&mut self, other: Point) -> Point {
+        Point::new(self.x + other.x, self.y + other.y)
+    }
+
+    pub fn add_assign(&mut self, other: Point) {
+        self.x += other.x;
+        self.y += other.y;
     }
 }
 
@@ -152,10 +117,10 @@ impl Segment {
 
 #[derive(Clone,Copy,Debug)]
 pub struct Rectangle {
-    x: f64,
-    y: f64,
-    width: f64,
-    height: f64,
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
 }
 
 impl Rectangle {
@@ -175,6 +140,11 @@ impl Rectangle {
             width: right - left,
             height: bottom - top,
         }
+    }
+
+    pub fn move_by(&mut self, x: f64, y: f64) {
+        self.x += x;
+        self.y += y;
     }
 
     pub fn render_piston(&self) -> [f64; 4] {
@@ -197,6 +167,10 @@ impl Shape for Rectangle {
 
     fn left(&self) -> f64 {
         self.x
+    }
+
+    fn check_collision_point(&self, point: &Point) -> bool {
+        check_collision_point_shape(point, self)
     }
 
     fn check_collision_rectangle(&self, rect: &Rectangle) -> bool {
@@ -253,10 +227,6 @@ impl Circle {
         self.x += v.get_dx();
         self.y += v.get_dy();
     }
-
-    pub fn check_collision_point(&self, point: &Point) -> bool {
-        check_collision_point_circle(point, self)
-    }
 }
 
 impl Shape for Circle {
@@ -276,6 +246,10 @@ impl Shape for Circle {
         self.x - self.r
     }
 
+    fn check_collision_point(&self, point: &Point) -> bool {
+        check_collision_point_circle(point, self)
+    }
+
     fn check_collision_rectangle(&self, rect: &Rectangle) -> bool {
         //TODO
         false
@@ -284,4 +258,60 @@ impl Shape for Circle {
     fn check_collision_circle(&self, circle: &Circle) -> bool {
         check_collison_circle_circle(self, circle)
     }
+}
+
+
+fn check_collision_point_point(a: &Point, b: &Point) -> bool {
+    (a.get_x() - b.get_x()).abs() >= POINT_EPSILON &&
+    (a.get_y() - b.get_y()).abs() >= POINT_EPSILON
+}
+
+fn check_collision_point_shape(point: &Point, shape: &dyn Shape) -> bool {
+    if (point.x < shape.right() &&
+        point.x > shape.left() &&
+        point.y < shape.bottom() &&
+        point.y > shape.top()) {
+        return true;
+    }
+
+    false
+}
+
+fn check_collision_point_segment(point: &Point, segment: &Segment) -> bool {
+    let distance = point.distance(segment.point0) + point.distance(segment.point1);
+    (segment.get_length() - distance).abs() <= POINT_EPSILON
+}
+
+fn check_collision_point_circle(point: &Point, circle: &Circle) -> bool {
+    point.distance(Point::new(circle.x, circle.y)) < circle.r
+}
+
+fn check_collision_segment_circle(segment: &Segment, circle: &Circle) -> bool {
+    if circle.check_collision_point(&segment.point0) || circle.check_collision_point(&segment.point1) {
+        return true;
+    }
+
+    let dot = (((circle.x - segment.point0.x) * (segment.point1.x - segment.point0.x)) +
+               ((circle.y - segment.point0.y) * (segment.point1.y - segment.point0.y))) /
+        segment.get_length().powf(2.0);
+
+    let p = Point::new(
+        segment.point0.x + dot * (segment.point1.x - segment.point0.x),
+        segment.point0.y + dot * (segment.point1.y - segment.point0.y)
+    );
+
+    circle.check_collision_point(&p) && segment.check_collision_point(&p)
+}
+
+fn check_collison_circle_circle(a: &Circle, b: &Circle) -> bool {
+    let dx = a.get_x() - b.get_x();
+    let dy = a.get_y() - b.get_y();
+
+    let distance = dx.hypot(dy);
+
+    if distance < a.get_r() + b.get_r() {
+        return true;
+    }
+
+    false
 }

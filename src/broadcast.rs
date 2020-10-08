@@ -49,8 +49,8 @@ impl Broadcast {
         self.input = pressed.clone();
     }
 
-    pub fn move_cursor(&mut self, cursor: &Point) {
-        self.cursor = cursor.clone();
+    pub fn move_cursor(&mut self, cursor: Point) {
+        self.cursor = cursor;
     }
 
     pub fn get_input(&self) -> Vec<char> {

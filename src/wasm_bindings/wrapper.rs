@@ -47,20 +47,16 @@ impl GameWrapper {
             pressed.push('M')
         }
 
-        self.game.update(&self.inputs.pressed, &self.inputs.cursor)
+        self.game.update(&self.inputs.pressed, self.inputs.cursor)
     }
 
     pub fn render(&mut self, ctx: &web_sys::CanvasRenderingContext2d) {
-        let screen = WasmScreen::new(ctx);
+        let mut screen = WasmScreen::new(ctx);
         screen.clear();
 
-        self.game.render(&screen);
+        self.game.render(&mut screen);
 
         screen.write_status(self.game.get_score(), self.game.get_player_health().ceil() as u32 );
-    }
-
-    pub fn say_hello(&self) -> f64 {
-        1.0
     }
 
     pub fn pressed(&mut self, btn: u32) {

@@ -4,6 +4,7 @@ use serde_json::{Result, Value, Deserializer};
 
 use crate::asteroid::*;
 use crate::broadcast::*;
+use crate::camera::*;
 use crate::physics::*;
 use crate::shape::*;
 use crate::ship::*;
@@ -21,6 +22,7 @@ pub struct Game {
     asteroids: Vec<Asteroid>,
     ship_count: u32,
     cached_actors: HashMap<u32, ShipCache>,
+    camera: Camera,
     broadcast: Broadcast,
     pressed: Vec<char>,
 }
@@ -31,6 +33,7 @@ impl Game {
         mobs: Vec<ShipArgs>,
         asteroids: Vec<AsteroidArgs>,
         spawner: bool,
+        camera_lock: bool,
     ) -> Game {
         let mut factory = ShipFactory::new();
 
@@ -43,6 +46,7 @@ impl Game {
             asteroids: Vec::new(),
             ship_count: 1,
             cached_actors: HashMap::new(),
+            camera: Camera::new(1024.0, 768.0, 1.0, camera_lock),
             broadcast: Broadcast::new(),
             pressed: Vec::new(),
         };
@@ -65,16 +69,17 @@ impl Game {
         let mobs: Vec<ShipArgs> = serde_json::from_value(json["mobs"].clone())?;
         let asteroids: Vec<AsteroidArgs> = serde_json::from_value(json["asteroids"].clone())?;
         let spawner = serde_json::from_value(json["spawner"].clone())?;
+        let camera_lock = serde_json::from_value(json["camera_lock"].clone())?;
 
-        Ok(Game::new(player, mobs, asteroids, spawner))
+        Ok(Game::new(player, mobs, asteroids, spawner, camera_lock))
     }
 
-    pub fn update(&mut self, pressed: &Vec<char>, cursor: &Point) -> bool {
+    pub fn update(&mut self, pressed: &Vec<char>, cursor: Point) -> bool {
         self.tick += 1;
 
         self.broadcast.update(self.tick);
         self.broadcast.set_pressed(pressed);
-        self.broadcast.move_cursor(cursor);
+        self.broadcast.move_cursor(cursor.clone().add(self.camera.get_offset()));
         self.read_messages();
 
         self.spawner.act(&self.broadcast);
@@ -102,7 +107,12 @@ impl Game {
         true
     }
 
-    pub fn render<S: Screen>(&mut self, screen: &S) {
+    pub fn render<S: Screen>(&mut self, screen: &mut S) {
+        if !self.camera.get_status() {
+            self.camera.follow(self.player.get_x(), self.player.get_y());
+            screen.set_offset(self.camera.get_offset());
+        }
+
         for (id, ship) in self.cached_actors.iter() {
             screen.draw_ship(&ship);
         }
@@ -110,6 +120,8 @@ impl Game {
         for asteroid in self.asteroids.iter() {
             screen.draw_asteroid(&asteroid)
         }
+
+        //println!("They hatin'?");
     }
 
     pub fn get_score(&self) -> u32 {
@@ -160,7 +172,7 @@ impl Game {
 }
 
 pub trait Screen {
-    //fn set_camera(&mut self, camera: &Camera);
+    fn set_offset(&mut self, point: Point);
     fn draw_ship(&self, ship: &ShipCache);
     fn draw_asteroid(&self, asteroid: &Asteroid);
 }

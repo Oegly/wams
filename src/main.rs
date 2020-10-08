@@ -5,6 +5,7 @@ extern crate serde_json;
 
 pub mod ai;
 pub mod asteroid;
+pub mod camera;
 pub mod game;
 pub mod physics;
 pub mod ship;

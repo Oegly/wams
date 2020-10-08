@@ -83,7 +83,7 @@ impl GameWrapper {
     }
 
     pub fn update(&mut self, u: &UpdateArgs) -> bool {
-        self.game.update(&self.inputs.pressed, &self.inputs.cursor)
+        self.game.update(&self.inputs.pressed, self.inputs.cursor)
     }
 
     pub fn render(&mut self, r: RenderArgs) {
@@ -91,7 +91,7 @@ impl GameWrapper {
         screen.set_args(r);
         screen.clear();
         
-        self.game.render(&screen);
+        self.game.render(&mut screen);
     }
 
     pub fn pressed(&mut self, btn: &Button) {

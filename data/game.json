@@ -12,5 +12,6 @@
     "asteroids": [
         [300.0, 20.0, 10.0]
     ],
-    "spawner": false
+    "spawner": false,
+    "camera_lock": false
 }

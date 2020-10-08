@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
-use crate::physics::*;
 use crate::asteroid::*;
+use crate::camera::*;
 use crate::game::*;
+use crate::physics::*;
+use crate::shape::*;
 use crate::ship::*;
 use crate::wasm_bindings::*;
 
@@ -11,6 +13,12 @@ use std::f64::consts::{PI,FRAC_PI_2};
 
 const FONT_COLOR: &str = "#444444";
 const HUD_COLOR: &str = "#666688";
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(a: String);
+}
 
 fn get_pallette(category: ShipCategory) ->  [String; 2] {
     match category {
@@ -35,12 +43,14 @@ fn get_alpha(hp: f64, category: ShipCategory) -> f64 {
 
 pub struct WasmScreen<'a> {
     ctx: &'a web_sys::CanvasRenderingContext2d,
+    offset: Point,
 }
 
 impl<'a> WasmScreen<'a> {
     pub fn new(ctx: &'a web_sys::CanvasRenderingContext2d) -> WasmScreen {
         WasmScreen {
             ctx: ctx,
+            offset: Point::new(0.0, 0.0),
         }
     }
 
@@ -64,7 +74,10 @@ impl<'a> WasmScreen<'a> {
 
 impl<'a> Screen for WasmScreen<'a> {
     fn draw_ship(&self, ship: &ShipCache) {
-        let [x, y, r] = [ship.circle.x, ship.circle.y, ship.circle.r];
+        let [mut x, mut y, r] = [ship.circle.x, ship.circle.y, ship.circle.r];
+        x -= self.offset.x;
+        y -= self.offset.y;
+
         let colors = &get_pallette(ship.category);
         let alpha = get_alpha(ship.health, ship.category);
 
@@ -101,11 +114,17 @@ impl<'a> Screen for WasmScreen<'a> {
 
     fn draw_asteroid(&self, asteroid: &Asteroid) {
         let circle = asteroid.get_circle();
-        let [x, y, r] = [circle.x, circle.y, circle.r];
+        let [mut x, mut y, r] = [circle.x, circle.y, circle.r];
+        x -= self.offset.x;
+        y -= self.offset.y;
 
         self.ctx.set_fill_style(&JsValue::from("#888"));
         self.ctx.begin_path();
         self.ctx.arc(x, y, r, 0.0, std::f64::consts::PI * 2.0).unwrap();
         self.ctx.fill();
+    }
+
+    fn set_offset(&mut self, point: Point) {
+        self.offset = point;
     }
 }
