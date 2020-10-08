@@ -1,4 +1,6 @@
 /target
 /node_modules
 /pkg
-**/*.rs.bk
+/.vscode
+/**/*.rs.bk
+*.bak
