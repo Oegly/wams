@@ -100,6 +100,7 @@ impl GameWrapper {
             &Button::Keyboard(Key::Down) => self.inputs.press('B'),
             &Button::Keyboard(Key::Left) => self.inputs.press('L'),
             &Button::Keyboard(Key::Right) => self.inputs.press('R'),
+            &Button::Keyboard(Key::P) => self.inputs.press('P'),
             &Button::Mouse(MouseButton::Left) => self.inputs.press('M'),
             _ => (),
         }
@@ -115,6 +116,7 @@ impl GameWrapper {
             &Button::Keyboard(Key::Down) => self.inputs.release('B'),
             &Button::Keyboard(Key::Left) => self.inputs.release('L'),
             &Button::Keyboard(Key::Right) => self.inputs.release('R'),
+            &Button::Keyboard(Key::P) => {self.inputs.release('R'); self.game.pause()},
             &Button::Mouse(MouseButton::Left) => self.inputs.release('M'),
             _ => (),
         }

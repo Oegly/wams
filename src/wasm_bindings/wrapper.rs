@@ -34,9 +34,12 @@ pub struct GameWrapper {
 #[wasm_bindgen]
 impl GameWrapper {
     pub fn new(s: String) -> GameWrapper {
-        GameWrapper {
-            game: Game::from_json(s).expect("Invalid JSON."),
-            inputs: Inputs::new(),
+        match Game::from_json(s) {
+            Ok(game) => GameWrapper {
+                game: game,
+                inputs: Inputs::new(),
+            },
+            Err(e) => panic!(e)
         }
     }
 
@@ -60,11 +63,13 @@ impl GameWrapper {
     }
 
     pub fn pressed(&mut self, btn: u32) {
+        log(format!("{}", btn));
         match btn {
             38 => self.inputs.press('T'),
             40 => self.inputs.press('B'),
             37 => self.inputs.press('L'),
             39 => self.inputs.press('R'),
+            80 => self.inputs.press('P'),
             _ => (),
         }
     }
@@ -75,6 +80,7 @@ impl GameWrapper {
             40 => self.inputs.release('B'),
             37 => self.inputs.release('L'),
             39 => self.inputs.release('R'),
+            80 => {self.inputs.release('P'); self.game.pause()},
             _ => (),
         }
     }
