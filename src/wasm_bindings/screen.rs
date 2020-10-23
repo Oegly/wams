@@ -55,7 +55,7 @@ impl<'a> WasmScreen<'a> {
     }
 
     pub fn clear(&self) {
-        self.ctx.clear_rect(0.0, 0.0, 1920.0, 1080.0);
+        self.ctx.clear_rect(0.0, 0.0, 1024.0, 768.0);
     }
 
     pub fn write_status(&self, score: u32, health: u32) {
@@ -126,5 +126,12 @@ impl<'a> Screen for WasmScreen<'a> {
 
     fn set_offset(&mut self, point: Point) {
         self.offset = point;
+        //self.draw_background();
+    }
+
+    fn draw_background(&self) {
+        self.clear();
+        self.ctx.set_fill_style(&JsValue::from("#ccccee".to_string()));
+        self.ctx.fill_rect(0.0, 0.0, 1024.0, 768.0);
     }
 }

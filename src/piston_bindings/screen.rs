@@ -127,4 +127,8 @@ impl Screen for PistonScreen {
     fn set_offset(&mut self, point: Point) {
         self.offset = point;
     }
+
+    fn draw_background(&self) {
+        self.clear();
+    }
 }

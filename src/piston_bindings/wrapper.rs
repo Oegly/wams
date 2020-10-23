@@ -89,7 +89,6 @@ impl GameWrapper {
     pub fn render(&mut self, r: RenderArgs) {
         let mut screen = PistonScreen::new(self.gl.clone(), r);
         screen.set_args(r);
-        screen.clear();
         
         self.game.render(&mut screen);
     }

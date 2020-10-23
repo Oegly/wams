@@ -122,6 +122,8 @@ impl Game {
             screen.set_offset(self.camera.get_offset());
         }
 
+        screen.draw_background();
+        
         for (id, ship) in self.cached_actors.iter() {
             screen.draw_ship(&ship);
         }
@@ -188,4 +190,5 @@ pub trait Screen {
     fn set_offset(&mut self, point: Point);
     fn draw_ship(&self, ship: &ShipCache);
     fn draw_asteroid(&self, asteroid: &Asteroid);
+    fn draw_background(&self);
 }

@@ -55,7 +55,6 @@ impl GameWrapper {
 
     pub fn render(&mut self, ctx: &web_sys::CanvasRenderingContext2d) {
         let mut screen = WasmScreen::new(ctx);
-        screen.clear();
 
         self.game.render(&mut screen);
 
