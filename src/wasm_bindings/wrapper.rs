@@ -61,25 +61,25 @@ impl GameWrapper {
         screen.write_status(self.game.get_score(), self.game.get_player_health().ceil() as u32 );
     }
 
-    pub fn pressed(&mut self, btn: u32) {
+    pub fn pressed(&mut self, btn: &str) {
         log(format!("{}", btn));
         match btn {
-            38 => self.inputs.press('T'),
-            40 => self.inputs.press('B'),
-            37 => self.inputs.press('L'),
-            39 => self.inputs.press('R'),
-            80 => self.inputs.press('P'),
+            "arrowup" | "w" => self.inputs.press('T'),
+            "arrowdown" | "s" => self.inputs.press('B'),
+            "arrowleft" | "a"=> self.inputs.press('L'),
+            "arrowright" | "d"=> self.inputs.press('R'),
+            "p" => {self.inputs.press('P'); self.game.pause()},
             _ => (),
         }
     }
 
-    pub fn released(&mut self, btn: u32) {
+    pub fn released(&mut self, btn: &str) {
         match btn {
-            38 => self.inputs.release('T'),
-            40 => self.inputs.release('B'),
-            37 => self.inputs.release('L'),
-            39 => self.inputs.release('R'),
-            80 => {self.inputs.release('P'); self.game.pause()},
+            "arrowup" | "w" => self.inputs.release('T'),
+            "arrowdown" | "s" => self.inputs.release('B'),
+            "arrowleft" | "a" => self.inputs.release('L'),
+            "arrowright" | "d" => self.inputs.release('R'),
+            "p" => self.inputs.release('P'),
             _ => (),
         }
     }

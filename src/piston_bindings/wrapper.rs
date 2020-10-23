@@ -95,11 +95,11 @@ impl GameWrapper {
 
     pub fn pressed(&mut self, btn: &Button) {
         match btn {
-            &Button::Keyboard(Key::Up) => self.inputs.press('T'),
-            &Button::Keyboard(Key::Down) => self.inputs.press('B'),
-            &Button::Keyboard(Key::Left) => self.inputs.press('L'),
-            &Button::Keyboard(Key::Right) => self.inputs.press('R'),
-            &Button::Keyboard(Key::P) => self.inputs.press('P'),
+            &Button::Keyboard(Key::Up) | &Button::Keyboard(Key::W) => self.inputs.press('T'),
+            &Button::Keyboard(Key::Down) | &Button::Keyboard(Key::S) => self.inputs.press('B'),
+            &Button::Keyboard(Key::Left) | &Button::Keyboard(Key::A) => self.inputs.press('L'),
+            &Button::Keyboard(Key::Right) | &Button::Keyboard(Key::D) => self.inputs.press('R'),
+            &Button::Keyboard(Key::P) => {self.inputs.press('P'); self.game.pause()},
             &Button::Mouse(MouseButton::Left) => self.inputs.press('M'),
             _ => (),
         }
@@ -111,11 +111,11 @@ impl GameWrapper {
 
     pub fn released(&mut self, btn: &Button) {
         match btn {
-            &Button::Keyboard(Key::Up) => self.inputs.release('T'),
-            &Button::Keyboard(Key::Down) => self.inputs.release('B'),
-            &Button::Keyboard(Key::Left) => self.inputs.release('L'),
-            &Button::Keyboard(Key::Right) => self.inputs.release('R'),
-            &Button::Keyboard(Key::P) => {self.inputs.release('R'); self.game.pause()},
+            &Button::Keyboard(Key::Up) | &Button::Keyboard(Key::W) => self.inputs.release('T'),
+            &Button::Keyboard(Key::Down) | &Button::Keyboard(Key::S) => self.inputs.release('B'),
+            &Button::Keyboard(Key::Left) | &Button::Keyboard(Key::A) => self.inputs.release('L'),
+            &Button::Keyboard(Key::Right) | &Button::Keyboard(Key::D) => self.inputs.release('R'),
+            &Button::Keyboard(Key::P) => self.inputs.release('P'),
             &Button::Mouse(MouseButton::Left) => self.inputs.release('M'),
             _ => (),
         }

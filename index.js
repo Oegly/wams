@@ -91,11 +91,11 @@ async function init(m) {
   });
 
   document.addEventListener("keydown", (event) => {
-    game.pressed(event.keyCode);
+    game.pressed(event.key.toLowerCase());
   });
 
   document.addEventListener("keyup", (event) => {
-    game.released(event.keyCode);
+    game.released(event.key.toLowerCase());
   });
 
   document.addEventListener("mousemove", (event) => {
