@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use crate::physics::*;
 use crate::shape::*;
 
-use std::f64::consts::{PI,FRAC_PI_2};
-
-pub const TAU: f64 = PI * 2.0;
+use std::f64::consts::{PI,FRAC_PI_2,TAU};
 
 pub struct Asteroid {
     circle: Circle,

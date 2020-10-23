@@ -5,7 +5,7 @@ use crate::physics::*;
 use crate::shape::*;
 use crate::ship::*;
 
-use std::f64::consts::{PI,FRAC_PI_2};
+use std::f64::consts::{PI,FRAC_PI_2,TAU};
 
 pub fn build_brain(category: ShipCategory, id: u32) -> Box<dyn Brain> {
     match category {

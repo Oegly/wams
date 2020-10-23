@@ -7,9 +7,7 @@ use crate::physics::*;
 use crate::shape::*;
 use crate::storage::*;
 
-use std::f64::consts::{PI,FRAC_PI_2};
-
-pub const TAU: f64 = PI * 2.0;
+use std::f64::consts::{PI,FRAC_PI_2,TAU};
 
 #[repr(usize)]
 #[derive(Debug,Copy,Clone,Eq,PartialEq,Hash)]
@@ -180,7 +178,7 @@ impl Ship {
         self.vector.magnitude *= self.elasticity;
 
         // Take damage
-        self.health -= base / 10.0;
+        self.health -= base.abs() / 10.0;
     }
 
     pub fn act(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) {
@@ -281,7 +279,7 @@ impl ShipBuilder {
             vector: self.vector,
             circle: Circle::new(self.pos.x, self.pos.y, RADIUS[cat]),
             health: HEALTH[cat],
-            direction: PI,
+            direction: 0.0,
             force: FORCE[cat],
             mass: MASS[cat],
             elasticity: 2.0/3.0,
