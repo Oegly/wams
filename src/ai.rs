@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::asteroid::*;
 use crate::broadcast::*;
 use crate::physics::*;
 use crate::shape::*;
@@ -23,10 +24,21 @@ pub enum Directive {
 }
 
 pub trait Brain {
-    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive>;
+    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) -> Vec<Directive>;
     fn box_clone(&self) -> Box<dyn Brain>;
-}
 
+    fn target_visible(&self, target: Point, me: Point, props: &Vec<Asteroid>) -> bool {
+        let path = Segment::new(target, me);
+
+        for prop in props.iter() {
+            if path.check_collision_circle(&prop.get_circle()) {
+                return false;
+            }
+        }
+
+        true
+    }
+}
 
 impl Clone for Box<dyn Brain> {
     fn clone(&self) -> Box<dyn Brain> {
@@ -57,7 +69,7 @@ impl BellBrain {
 }
 
 impl Brain for BellBrain {
-    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive> {
+    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) -> Vec<Directive> {
         let pressed: Vec<char> = cast.get_input();
 
         if pressed.contains(&'M') {
@@ -91,6 +103,8 @@ impl Brain for BellBrain {
 #[derive(Clone,Debug)]
 pub struct JalapenoBrain {
     id: u32,
+    active: bool,
+    player_position: Point,
     previous_collisons: Vec<u32>,
 }
 
@@ -98,14 +112,25 @@ impl JalapenoBrain {
     pub fn new(id: u32) -> JalapenoBrain {
         JalapenoBrain {
             id: id,
+            active: false,
+            player_position: Point::new(0.0, 0.0),
             previous_collisons: Vec::new(),
         }
     }
 }
 
 impl Brain for JalapenoBrain {
-    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive> {
-        vec![Directive::Aim(cast.player_position), Directive::Thrust(1.0 * time_delta)]
+    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) -> Vec<Directive> {
+        if cast.player_id.is_some() &&
+        self.target_visible(cast.player_position, actors[&self.id].get_point(), props) {
+            self.active = true;
+            self.player_position = cast.player_position;
+        }
+
+        return match self.active {
+            true => vec![Directive::Aim(self.player_position), Directive::Thrust(1.0 * time_delta)],
+            false => vec![Directive::Rotate(FRAC_PI_2 * time_delta)],
+        }
     }
 
     fn box_clone(&self) -> Box<dyn Brain> {
@@ -116,6 +141,8 @@ impl Brain for JalapenoBrain {
 #[derive(Clone,Debug)]
 pub struct CayenneBrain {
     id: u32,
+    active: bool,
+    player_position: Point,
     previous_collisons: Vec<u32>,
 }
 
@@ -123,26 +150,28 @@ impl CayenneBrain {
     pub fn new(id: u32) -> CayenneBrain {
         CayenneBrain {
             id: id,
+            active: false,
+            player_position: Point::new(0.0, 0.0),
             previous_collisons: Vec::new(),
         }
     }
 
-    pub fn chase(&mut self, time_delta: f64, me: &ShipCache, target: &ShipCache) -> Vec<Directive> {
+    pub fn chase(&mut self, time_delta: f64, me: &ShipCache, target: Point) -> Vec<Directive> {
         // How to get to target (from where we are now)
-        let ideal_path = Segment::new(me.get_point(), target.get_point());
+        let ideal_path = Segment::new(me.get_point(), target);
 
         // Where would we go if we thrusted now?
         let mut plan = me.vector.clone();
         plan.add_vector(Vector::new(ideal_path.get_direction(), me.force * time_delta));
         let planned_path = Segment::new(
             Point::new(me.circle.x + plan.get_dx(), me.circle.y + plan.get_dy()),
-            target.get_point()
+            target
         );
 
         // Would we be closer to the target?
         if planned_path.get_length() < ideal_path.get_length() {
             return vec![
-                Directive::Aim(target.get_point()),
+                Directive::Aim(target),
                 Directive::Thrust(1.0 * time_delta)
             ];
         }
@@ -152,10 +181,15 @@ impl CayenneBrain {
 }
 
 impl Brain for CayenneBrain {
-    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>) -> Vec<Directive> {
-        match cast.player_id {
-            Some(id) => return self.chase(time_delta, &actors[&self.id], &actors[&id]),
-            None => return vec![],
+    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) -> Vec<Directive> {
+        if cast.player_id.is_some() && self.target_visible(cast.player_position, actors[&self.id].get_point(), props) {
+            self.active = true;
+            self.player_position = cast.player_position;
+        }
+
+        return match self.active {
+            true => self.chase(time_delta, &actors[&self.id], self.player_position),
+            false => vec![Directive::Rotate(FRAC_PI_2 * time_delta)],
         }
     }
 

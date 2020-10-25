@@ -197,7 +197,7 @@ impl Ship {
             return ();
         }
 
-        for d in self.brain.think(time_delta, cast, actors) {
+        for d in self.brain.think(time_delta, cast, actors, props) {
             match d {
                 Directive::Rotate(n) => self.rotate(n),
                 Directive::Thrust(n) => self.thrust(n),
