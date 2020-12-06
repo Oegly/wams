@@ -20,23 +20,20 @@ extern "C" {
     fn log(a: String);
 }
 
-pub fn clear_canvas(ctx: &web_sys::CanvasRenderingContext2d) {
-    //log(format!("{}", ctx.canvas().height()));
-    ctx.clear_rect(0.0, 0.0, 1920.0, 1080.0);
-}
-
 #[wasm_bindgen]
 pub struct GameWrapper {
     game: Game,
+    screen: WasmScreen,
     inputs: Inputs,
 }
 
 #[wasm_bindgen]
 impl GameWrapper {
-    pub fn new(s: String) -> GameWrapper {
+    pub fn new(s: String, ctx: web_sys::CanvasRenderingContext2d) -> GameWrapper {
         match Game::from_json(s) {
             Ok(game) => GameWrapper {
                 game: game,
+                screen: WasmScreen::new(ctx),
                 inputs: Inputs::new(),
             },
             Err(e) => panic!(e)
@@ -53,23 +50,26 @@ impl GameWrapper {
         self.game.update(&self.inputs.pressed, self.inputs.cursor)
     }
 
-    pub fn render(&mut self, ctx: &web_sys::CanvasRenderingContext2d) {
-        let mut screen = WasmScreen::new(ctx);
+    pub fn render(&mut self) {
+        //let mut screen = WasmScreen::new(self.screen.ctx);
 
-        self.game.render(&mut screen);
+        self.game.render(&mut self.screen);
 
-        screen.write_status(self.game.get_score(), self.game.get_player_health().ceil() as u32 );
+        self.screen.write_status(self.game.get_score(), self.game.get_player_health().ceil() as u32 );
+    }
+
+    pub fn resize(&mut self) {
+        self.screen.resize();
     }
 
     pub fn pressed(&mut self, btn: &str) {
-        log(format!("{}", btn));
         match btn {
             "arrowup" | "w" => self.inputs.press('T'),
             "arrowdown" | "s" => self.inputs.press('B'),
             "arrowleft" | "a"=> self.inputs.press('L'),
             "arrowright" | "d"=> self.inputs.press('R'),
             "p" => {self.inputs.press('P'); self.game.pause()},
-            _ => (),
+            _ => log(format!("btn: {}", btn.to_string())),
         }
     }
 

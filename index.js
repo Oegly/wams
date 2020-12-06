@@ -11,7 +11,7 @@ const ctx = canvas.getContext("2d");
 
 document.body.appendChild(canvas);
 
-const resizeCanvas = () => {
+const resizeCanvas = (game) => {
   let chunkX = window.innerWidth / 4;
   let chunkY = window.innerHeight / 3;
 
@@ -25,6 +25,7 @@ const resizeCanvas = () => {
 
   //ctx.scale(1024 / canvas.width, 768 / canvas.height);
   console.log(ctx.scaleWidth, ctx.scaleHeight);
+  game.resize();
 };
 
 class Clock {
@@ -65,7 +66,7 @@ const update = (game, clock) => {
   clock.last = performance.now();
 
   if (game.update()) {
-    window.requestAnimationFrame(() => game.render(ctx));
+    window.requestAnimationFrame(() => game.render());
     window.setTimeout(() => update(game, clock), clock.tick());
   } else {
     game.clock.speak();
@@ -78,7 +79,7 @@ async function init(m) {
   let level = p.has("level") ? p.get("level") : "game";
   let s = await fetch("./data/" + level + ".json").then(r => r.text());
 
-  let game = m.start(s);
+  let game = m.start(s, ctx);
 
   window.addEventListener("resize", () => resizeCanvas(game));
 

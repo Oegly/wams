@@ -41,21 +41,36 @@ fn get_alpha(hp: f64, category: ShipCategory) -> f64 {
     percentage_left * 0.8 + 0.2
 }
 
-pub struct WasmScreen<'a> {
-    ctx: &'a web_sys::CanvasRenderingContext2d,
+pub struct WasmScreen {
+    ctx: web_sys::CanvasRenderingContext2d,
+    size: Point,
     offset: Point,
 }
 
-impl<'a> WasmScreen<'a> {
-    pub fn new(ctx: &'a web_sys::CanvasRenderingContext2d) -> WasmScreen {
+impl WasmScreen {
+    pub fn new(ctx: web_sys::CanvasRenderingContext2d) -> WasmScreen {
+        log(format!("{}, {}, {}", std::mem::size_of::<web_sys::CanvasRenderingContext2d>(), ctx.canvas().unwrap().width(), ctx.canvas().unwrap().height()));
+        let s = Point::new(
+            ctx.canvas().unwrap().width().into(),
+            ctx.canvas().unwrap().width().into()
+        );
+
         WasmScreen {
             ctx: ctx,
+            size: s,
             offset: Point::new(0.0, 0.0),
         }
     }
 
+    pub fn resize(&mut self) {
+        self.size = Point::new(
+            self.ctx.canvas().unwrap().width().into(),
+            self.ctx.canvas().unwrap().width().into()
+        );
+    }
+
     pub fn clear(&self) {
-        self.ctx.clear_rect(0.0, 0.0, 1024.0, 768.0);
+        self.ctx.clear_rect(0.0, 0.0, self.size.x, self.size.y);
     }
 
     pub fn write_status(&self, score: u32, health: u32) {
@@ -72,7 +87,7 @@ impl<'a> WasmScreen<'a> {
     }
 }
 
-impl<'a> Screen for WasmScreen<'a> {
+impl Screen for WasmScreen {
     fn draw_ship(&self, ship: &ShipCache) {
         let [mut x, mut y, r] = [ship.circle.x, ship.circle.y, ship.circle.r];
         x -= self.offset.x;
@@ -132,6 +147,6 @@ impl<'a> Screen for WasmScreen<'a> {
     fn draw_background(&self) {
         self.clear();
         self.ctx.set_fill_style(&JsValue::from("#ccccee".to_string()));
-        self.ctx.fill_rect(0.0, 0.0, 1024.0, 768.0);
+        self.ctx.fill_rect(0.0, 0.0, self.size.x, self.size.y);
     }
 }

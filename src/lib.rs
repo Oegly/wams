@@ -28,9 +28,9 @@ use wasm_bindgen::prelude::*;
 
 #[cfg(target_arch = "wasm32")]
 #[wasm_bindgen]
-pub fn start(s: &js_sys::JsString) -> wasm_bindings::wrapper::GameWrapper {
+pub fn start(s: &js_sys::JsString, ctx: web_sys::CanvasRenderingContext2d) -> wasm_bindings::wrapper::GameWrapper {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
 
     //panic!("ohnoes");
-    wasm_bindings::wrapper::GameWrapper::new(String::from(s))
+    wasm_bindings::wrapper::GameWrapper::new(String::from(s), ctx)
 }
