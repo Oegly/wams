@@ -34,6 +34,7 @@ impl Game {
         player: ShipArgs,
         mobs: Vec<ShipArgs>,
         asteroids: Vec<AsteroidArgs>,
+        walls: Vec<WallArgs>,
         spawner: bool,
         camera_lock: bool,
     ) -> Game {
@@ -60,7 +61,11 @@ impl Game {
         }
 
         for asteroid in asteroids.iter() {
-            game.asteroids.push(Asteroid::new(asteroid.0, asteroid.1, asteroid.2))
+            game.asteroids.push(Asteroid::from(asteroid))
+        }
+
+        for wall in walls.iter() {
+            game.asteroids.append(&mut Asteroid::from_wall_args(wall));
         }
 
         game
@@ -70,12 +75,13 @@ impl Game {
         let json: Value = serde_json::from_str(&s).unwrap();
 
         let player: ShipArgs = serde_json::from_value(json["player"].clone())?;
-        let mobs: Vec<ShipArgs> = serde_json::from_value(json["mobs"].clone())?;
-        let asteroids: Vec<AsteroidArgs> = serde_json::from_value(json["asteroids"].clone())?;
-        let spawner = serde_json::from_value(json["spawner"].clone())?;
-        let camera_lock = serde_json::from_value(json["camera_lock"].clone())?;
+        let mobs: Vec<ShipArgs> = serde_json::from_value(json["mobs"].clone()).unwrap_or(vec![]);
+        let asteroids: Vec<AsteroidArgs> = serde_json::from_value(json["asteroids"].clone()).unwrap_or(vec![]);
+        let walls: Vec<WallArgs> = serde_json::from_value(json["walls"].clone()).unwrap_or(vec![]);
+        let spawner = serde_json::from_value(json["spawner"].clone()).unwrap_or(false);
+        let camera_lock = serde_json::from_value(json["camera_lock"].clone()).unwrap_or(false);
 
-        Ok(Game::new(player, mobs, asteroids, spawner, camera_lock))
+        Ok(Game::new(player, mobs, asteroids, walls, spawner, camera_lock))
     }
 
     pub fn update(&mut self, pressed: &Vec<char>, cursor: Point) -> bool {
