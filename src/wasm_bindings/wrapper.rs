@@ -58,7 +58,13 @@ impl GameWrapper {
         self.game.render(&mut self.screen);
         self.screen.draw_particles();
 
-        self.screen.write_status(self.game.get_score(), self.game.get_player_health().ceil() as u32 );
+        let now = web_sys::window().unwrap().performance().unwrap().now();
+
+        self.screen.write_status(
+            self.game.get_score(),
+            self.game.get_player_health().ceil() as u32,
+            now.floor() as u32 / 1000
+        );
     }
 
     pub fn resize(&mut self) {

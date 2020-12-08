@@ -35,4 +35,13 @@ version = "0.3.36"
 features = [
   'CanvasRenderingContext2d',
   'HtmlCanvasElement',
+  'Performance',
+  'Window',
 ]
+
+[dev-dependencies]
+criterion = "0.1.2"
+
+[[bench]]
+name = "bench_ship"
+harness = false
