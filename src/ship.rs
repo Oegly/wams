@@ -45,6 +45,7 @@ pub struct Ship {
     force: f64,
     mass: f64,
     elasticity: f64,
+    actions: Vec<Directive>,
 }
 
 impl Ship {
@@ -194,17 +195,24 @@ impl Ship {
                 cast.send_message(Message::new(0, self.id, MessageBody::Death));
             }
 
+            // Clear all actions
+            self.actions = Vec::new();
+
             return ();
         }
 
-        for d in self.brain.think(time_delta, cast, actors, props) {
+        let actions = self.brain.think(time_delta, cast, actors, props);
+
+        for d in &actions {
             match d {
-                Directive::Rotate(n) => self.rotate(n),
-                Directive::Thrust(n) => self.thrust(n),
+                Directive::Rotate(n) => self.rotate(*n),
+                Directive::Thrust(n) => self.thrust(*n),
                 Directive::Brake => self.brake(time_delta),
-                Directive::Aim(p) => self.aim(p),
+                Directive::Aim(p) => self.aim(*p),
             }
         }
+
+        self.actions = actions;
     }
 
     pub fn get_cache(&self, time_delta: f64) -> ShipCache {
@@ -219,6 +227,7 @@ impl Ship {
             mass: self.mass,
             elasticity: self.elasticity,
             trajectory: self.get_trajectory_bounds(time_delta),
+            actions: self.actions.to_vec(),
         }
     }
 }
@@ -283,6 +292,7 @@ impl ShipBuilder {
             force: FORCE[cat],
             mass: MASS[cat],
             elasticity: 2.0/3.0,
+            actions: Vec::new(),
         }
     }
 }
@@ -348,6 +358,7 @@ pub struct ShipCache {
     pub mass: f64,
     pub elasticity: f64,
     pub trajectory: Rectangle,
+    pub actions: Vec<Directive>,
 }
 
 impl ShipCache {

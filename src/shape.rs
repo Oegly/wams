@@ -24,7 +24,7 @@ pub trait Shape {
     }
 }
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy,Debug,PartialEq)]
 pub struct Point {
     pub x: f64,
     pub y: f64,

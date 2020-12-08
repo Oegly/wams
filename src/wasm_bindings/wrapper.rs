@@ -51,9 +51,12 @@ impl GameWrapper {
     }
 
     pub fn render(&mut self) {
+        use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
         //let mut screen = WasmScreen::new(self.screen.ctx);
 
         self.game.render(&mut self.screen);
+        self.screen.draw_particles();
 
         self.screen.write_status(self.game.get_score(), self.game.get_player_health().ceil() as u32 );
     }

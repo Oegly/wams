@@ -73,7 +73,7 @@ impl PistonScreen {
 }
 
 impl Screen for PistonScreen {
-    fn draw_ship(&self, ship: &ShipCache) {
+    fn draw_ship(&mut self, ship: &ShipCache, time_delta: f64, tick: u64) {
         use graphics::Transformed;
 
         let [mut _x, mut _y, _r, _d] = ship.render_piston();

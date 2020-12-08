@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
+use crate::ai::*;
 use crate::asteroid::*;
 use crate::camera::*;
 use crate::game::*;
@@ -8,6 +9,8 @@ use crate::physics::*;
 use crate::shape::*;
 use crate::ship::*;
 use crate::wasm_bindings::*;
+use crate::wasm_bindings::particle::*;
+
 
 use std::f64::consts::{PI,FRAC_PI_2};
 
@@ -45,20 +48,18 @@ pub struct WasmScreen {
     ctx: web_sys::CanvasRenderingContext2d,
     size: Point,
     offset: Point,
+    particles: Vec<Particle>,
 }
 
 impl WasmScreen {
     pub fn new(ctx: web_sys::CanvasRenderingContext2d) -> WasmScreen {
-        log(format!("{}, {}, {}", std::mem::size_of::<web_sys::CanvasRenderingContext2d>(), ctx.canvas().unwrap().width(), ctx.canvas().unwrap().height()));
-        let s = Point::new(
-            ctx.canvas().unwrap().width().into(),
-            ctx.canvas().unwrap().width().into()
-        );
-
+        let canvas = ctx.canvas().unwrap();
+        
         WasmScreen {
             ctx: ctx,
-            size: s,
+            size: Point::new(canvas.width().into(), canvas.height().into()),
             offset: Point::new(0.0, 0.0),
+            particles: Vec::new(),
         }
     }
 
@@ -73,10 +74,25 @@ impl WasmScreen {
         self.ctx.clear_rect(0.0, 0.0, self.size.x, self.size.y);
     }
 
+    pub fn draw_particles(&mut self) {
+        for p in self.particles.iter_mut() {
+            p.tick(1.0/60.0);
+        }
+
+        self.particles.retain(|p| p.lifetime > p.elapsed);
+
+        for p in &self.particles {
+            self.ctx.set_fill_style(&p.color);
+            self.ctx.begin_path();
+            self.ctx.arc(p.x - self.offset.x, p.y - self.offset.y, p.get_size(), 0.0, std::f64::consts::PI * 2.0).unwrap();
+            self.ctx.fill();
+        }
+    }
+
     pub fn write_status(&self, score: u32, health: u32) {
         self.ctx.set_global_alpha(0.4);
         self.ctx.set_fill_style(&JsValue::from(&HUD_COLOR.to_string()));
-        self.ctx.fill_rect(10.0, 10.0, 120.0, 60.0);
+        self.ctx.fill_rect(10.0, 10.0, 120.0, 90.0);
         self.ctx.set_global_alpha(1.0);
         self.ctx.set_fill_style(&JsValue::from(&FONT_COLOR.to_string()));
         self.ctx.set_font("16px Arial");
@@ -88,19 +104,32 @@ impl WasmScreen {
 }
 
 impl Screen for WasmScreen {
-    fn draw_ship(&self, ship: &ShipCache) {
+    fn draw_ship(&mut self, ship: &ShipCache, time_delta: f64, tick: u64) {
         let [mut x, mut y, r] = [ship.circle.x, ship.circle.y, ship.circle.r];
+
+        // Trail
+        let thrusting = ship.actions.iter().any(|d| match d {
+            Directive::Thrust(_) => true,
+            _ => false,  
+        });
+
+        if tick % 3 == 0 && thrusting {
+            let v = Vector::new(ship.direction + PI, r * 1.4);
+            self.particles.push(
+                Particle::new_trail(x + v.get_dx(), y + v.get_dy(), ship.vector.clone()));
+        }
+
         x -= self.offset.x;
         y -= self.offset.y;
 
         let colors = &get_pallette(ship.category);
         let alpha = get_alpha(ship.health, ship.category);
 
-        self.ctx.set_global_alpha(alpha);
-        self.ctx.set_fill_style(&JsValue::from(&colors[1]));
-
         self.ctx.translate(x, y);
         self.ctx.rotate(ship.direction + FRAC_PI_2);
+        
+        self.ctx.set_global_alpha(alpha);
+        self.ctx.set_fill_style(&JsValue::from(&colors[1]));
 
         // Nozzle
         self.ctx.begin_path();

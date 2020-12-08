@@ -16,6 +16,7 @@ pub fn build_brain(category: ShipCategory, id: u32) -> Box<dyn Brain> {
     }
 }
 
+#[derive(Clone,Copy,Debug,PartialEq)]
 pub enum Directive {
     Rotate(f64),
     Thrust(f64),

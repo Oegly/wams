@@ -131,7 +131,7 @@ impl Game {
         screen.draw_background();
         
         for (id, ship) in self.cached_actors.iter() {
-            screen.draw_ship(&ship);
+            screen.draw_ship(&ship, 1.0/60.0, self.tick);
         }
 
         for asteroid in self.asteroids.iter() {
@@ -194,7 +194,7 @@ impl Game {
 
 pub trait Screen {
     fn set_offset(&mut self, point: Point);
-    fn draw_ship(&self, ship: &ShipCache);
+    fn draw_ship(&mut self, ship: &ShipCache, time_delta: f64, tick: u64);
     fn draw_asteroid(&self, asteroid: &Asteroid);
     fn draw_background(&self);
 }
