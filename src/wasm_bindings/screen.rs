@@ -106,20 +106,17 @@ impl WasmScreen {
     }
 
     pub fn draw_collision(&mut self, cast: &Broadcast) {
-        let messages = cast.messages.iter()
+        cast.messages.iter()
             .filter(|m| m.recipient == 0)
-            .cloned()
-            .collect::<Vec<Message>>();
-
-        for msg in messages {
-            match msg.body {
+            .for_each(|msg| match msg.body {
                 MessageBody::ShipCollision(id, p) => {
-                    log(format!("{:?}", msg));
                     self.particles.append(&mut Particle::new_ship_collision(msg.sender, id, p));
                 },
+                MessageBody::AsteroidCollision(n, p) => {
+                    self.particles.append(&mut Particle::new_asteroid_collision(p));
+                },
                 _ => ()
-            }
-        }
+            });
     }
 }
 

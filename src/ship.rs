@@ -135,12 +135,9 @@ impl Ship {
                     //println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
                     self.collision_bounce(actor.circle, actor.vector, actor.elasticity, actor.mass);
 
-                    // TODO: Not repeating this block of code
-                    let dx = self.circle.get_x() - actor.circle.get_x();
-                    let dy = self.circle.get_y() - actor.circle.get_y();
-
-                    let v = Vector::new(dy.atan2(dx), self.circle.r);
-                    let p = Point::new(self.get_x() - v.get_dx(), self.get_y() - v.get_dy());
+                    let phi = (self.circle.y - actor.circle.y).atan2(self.circle.x - actor.circle.x);
+                    let v = Vector::new(phi, self.circle.r);
+                    let p = Point::new(self.circle.x - v.get_dx(), self.circle.y - v.get_dy());
 
                     if self.vector.magnitude > 10.0 {
                         cast.send_message(Message::new(0, self.id,
@@ -159,6 +156,16 @@ impl Ship {
 
                 //println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
                 self.collision_bounce(circle, Vector::empty(), prop.get_elasticity(), f64::powf(2.0, 63.0)-1.0);
+
+                let phi = (self.circle.y - circle.y).atan2(self.circle.x - circle.x);
+                let v = Vector::new(phi, self.circle.r);
+                let p = Point::new(self.circle.x - v.get_dx(), self.circle.y - v.get_dy());
+
+                if self.vector.magnitude > 10.0 {
+                    cast.send_message(Message::new(0, self.id,
+                        MessageBody::AsteroidCollision(Point::new(circle.x, circle.y), p)
+                    ));
+                }
             }
         }
 
