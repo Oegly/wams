@@ -141,6 +141,10 @@ impl Game {
         //println!("They hatin'?");
     }
 
+    pub fn get_broadcast(&self) -> &Broadcast {
+        &self.broadcast
+    }
+
     pub fn get_score(&self) -> u32 {
         self.score
     }

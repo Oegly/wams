@@ -3,6 +3,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::ai::*;
 use crate::asteroid::*;
+use crate::broadcast::*;
 use crate::camera::*;
 use crate::game::*;
 use crate::physics::*;
@@ -15,7 +16,7 @@ use crate::wasm_bindings::particle::*;
 use std::f64::consts::{PI,FRAC_PI_2};
 
 const FONT_COLOR: &str = "#444444";
-const HUD_COLOR: &str = "#666688";
+const HUD_COLOR: &str = "#9999bb";
 
 #[wasm_bindgen]
 extern "C" {
@@ -25,8 +26,8 @@ extern "C" {
 
 fn get_pallette(category: ShipCategory) ->  [String; 2] {
     match category {
-        ShipCategory::Bell => ["#cc6666".to_string(), "#bb5555".to_string()],
-        ShipCategory::Jalapeno => ["#66cc66".to_string(), "#55bb55".to_string()],
+        ShipCategory::Bell => ["#aa4444".to_string(), "#993333".to_string()],
+        ShipCategory::Jalapeno => ["#55bb55".to_string(), "#44aa44".to_string()],
         ShipCategory::Cayenne => ["#ee4444".to_string(), "#dd5555".to_string()],
     }
 }
@@ -101,7 +102,25 @@ impl WasmScreen {
         self.ctx.fill_text(&"Health:", 24.0, 60.0);
         self.ctx.fill_text(&format!("{:>18}", health), 24.0, 60.0);
         self.ctx.fill_text(&"Time:", 24.0, 84.0);
-        self.ctx.fill_text(&format!("{:>15}:{:02}", seconds / 60, seconds % 60), 24.0, 84.0);    }
+        self.ctx.fill_text(&format!("{:>15}:{:02}", seconds / 60, seconds % 60), 24.0, 84.0);
+    }
+
+    pub fn draw_collision(&mut self, cast: &Broadcast) {
+        let messages = cast.messages.iter()
+            .filter(|m| m.recipient == 0)
+            .cloned()
+            .collect::<Vec<Message>>();
+
+        for msg in messages {
+            match msg.body {
+                MessageBody::ShipCollision(id, p) => {
+                    log(format!("{:?}", msg));
+                    self.particles.append(&mut Particle::new_ship_collision(msg.sender, id, p));
+                },
+                _ => ()
+            }
+        }
+    }
 }
 
 impl Screen for WasmScreen {
@@ -114,7 +133,7 @@ impl Screen for WasmScreen {
             _ => false,  
         });
 
-        if tick % 3 == 0 && thrusting {
+        if tick % 6 == 0 && thrusting {
             let v = Vector::new(ship.direction + PI, r * 1.4);
             self.particles.push(
                 Particle::new_trail(x + v.get_dx(), y + v.get_dy(), ship.vector.clone()));
@@ -163,7 +182,7 @@ impl Screen for WasmScreen {
         x -= self.offset.x;
         y -= self.offset.y;
 
-        self.ctx.set_fill_style(&JsValue::from("#888"));
+        self.ctx.set_fill_style(&JsValue::from("#999"));
         self.ctx.begin_path();
         self.ctx.arc(x, y, r, 0.0, std::f64::consts::PI * 2.0).unwrap();
         self.ctx.fill();
@@ -176,7 +195,7 @@ impl Screen for WasmScreen {
 
     fn draw_background(&self) {
         self.clear();
-        self.ctx.set_fill_style(&JsValue::from("#ccccee".to_string()));
+        self.ctx.set_fill_style(&JsValue::from("#666688".to_string()));
         self.ctx.fill_rect(0.0, 0.0, self.size.x, self.size.y);
     }
 }

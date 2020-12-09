@@ -56,6 +56,7 @@ impl GameWrapper {
         //let mut screen = WasmScreen::new(self.screen.ctx);
 
         self.game.render(&mut self.screen);
+        self.screen.draw_collision(self.game.get_broadcast());
         self.screen.draw_particles();
 
         let now = web_sys::window().unwrap().performance().unwrap().now();

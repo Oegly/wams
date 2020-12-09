@@ -122,7 +122,7 @@ impl Ship {
         }
     }
 
-    pub fn check_collisions(&mut self, time_delta: f64, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) -> bool {
+    pub fn check_collisions(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) -> bool {
         let mut collision = false;
         let trajectory = self.get_trajectory_bounds(time_delta);
 
@@ -134,6 +134,19 @@ impl Ship {
 
                     //println!("Ship #{:} has {:.2} HP left.", self.id, self.health as f32 / 100.0);
                     self.collision_bounce(actor.circle, actor.vector, actor.elasticity, actor.mass);
+
+                    // TODO: Not repeating this block of code
+                    let dx = self.circle.get_x() - actor.circle.get_x();
+                    let dy = self.circle.get_y() - actor.circle.get_y();
+
+                    let v = Vector::new(dy.atan2(dx), self.circle.r);
+                    let p = Point::new(self.get_x() - v.get_dx(), self.get_y() - v.get_dy());
+
+                    if self.vector.magnitude > 10.0 {
+                        cast.send_message(Message::new(0, self.id,
+                            MessageBody::ShipCollision(actor.id, p)
+                        ));
+                    }
             }
         }
 
@@ -186,7 +199,7 @@ impl Ship {
         // Store state before collisions
         let alive = self.health > 0.0;
 
-        self.check_collisions(time_delta, actors, props);
+        self.check_collisions(time_delta, cast, actors, props);
         self.abide_physics(time_delta);
 
         if self.health <= 0.0 {

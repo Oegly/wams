@@ -83,5 +83,6 @@ impl Message {
 pub enum MessageBody {
     Birth(ShipBuilder),
     Death,
-    Collison(Vector)
+    ShipCollision(u32, Point),
+    AsteroidCollision(Point, Point),
 }
