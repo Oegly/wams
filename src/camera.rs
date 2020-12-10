@@ -11,17 +11,17 @@ pub struct Camera {
     screen: Rectangle,
     viewport: Rectangle,
     scale: f64,
-    locked: bool,
+    follow: (bool, bool),
 }
 
 impl Camera {
-    pub fn new(width: f64, height: f64, scale: f64, locked: bool) -> Camera {
+    pub fn new(width: f64, height: f64, scale: f64, follow: (bool, bool)) -> Camera {
         let mut camera = Camera {
             offset: Point::new(0.0, 0.0),
             screen: Rectangle::new(0.0, 0.0, width, height),
             viewport: Rectangle::new(0.0, 0.0, 0.0, 0.0),
             scale: 1.0,
-            locked: locked,
+            follow: follow,
         };
 
         camera.adjust_viewport();
@@ -41,8 +41,8 @@ impl Camera {
         self.offset
     }
     
-    pub fn get_status(&self) -> bool {
-        self.locked
+    pub fn get_status(&self) -> (bool, bool) {
+        self.follow
     }
 
     pub fn follow(&mut self, x: f64, y: f64) {
@@ -50,21 +50,33 @@ impl Camera {
             return ();
         }
 
+        if self.follow.0 {
+            self.follow_x(x);
+        }
+
+        if self.follow.1 {
+            self.follow_y(y);
+        }
+
+        self.adjust_viewport();
+    }
+
+    pub fn follow_x(&mut self, x: f64) {
         if self.viewport.left() > x || self.viewport.right() < x {
             let dx = f64::min((self.viewport.left() - x).abs(), (x - self.viewport.right()).abs());
             let vx = f64::powf(dx / (VIEWPORT_X * self.screen.width), 2.0) * VIEWPORT_X * self.screen.width;
 
             self.offset.x += vx * f64::signum(x - self.viewport.left());
         }
+    }
 
+    pub fn follow_y(&mut self, y: f64) {
         if self.viewport.top() > y || self.viewport.bottom() < y {
             let dy = f64::min((self.viewport.top() - y).abs(), (y - self.viewport.bottom()).abs());
             let vy = f64::powf(dy / (VIEWPORT_Y * self.screen.height), 2.0) * VIEWPORT_Y * self.screen.height;
     
             self.offset.y += vy * f64::signum(y - self.viewport.top());
         }
-
-        self.adjust_viewport();
     }
 
     pub fn update_screen(&mut self, width: f64, height: f64, scale: f64) {

@@ -36,7 +36,7 @@ impl Game {
         asteroids: Vec<AsteroidArgs>,
         walls: Vec<WallArgs>,
         spawner: bool,
-        camera_lock: bool,
+        camera_follow: (bool, bool),
     ) -> Game {
         let mut factory = ShipFactory::new();
 
@@ -51,7 +51,7 @@ impl Game {
             asteroids: Vec::new(),
             ship_count: 1,
             cached_actors: HashMap::new(),
-            camera: Camera::new(1024.0, 768.0, 1.0, camera_lock),
+            camera: Camera::new(1024.0, 768.0, 1.0, camera_follow),
             broadcast: Broadcast::new(),
             pressed: Vec::new(),
         };
@@ -79,9 +79,9 @@ impl Game {
         let asteroids: Vec<AsteroidArgs> = serde_json::from_value(json["asteroids"].clone()).unwrap_or(vec![]);
         let walls: Vec<WallArgs> = serde_json::from_value(json["walls"].clone()).unwrap_or(vec![]);
         let spawner = serde_json::from_value(json["spawner"].clone()).unwrap_or(false);
-        let camera_lock = serde_json::from_value(json["camera_lock"].clone()).unwrap_or(false);
+        let camera_follow = serde_json::from_value(json["camera_follow"].clone()).unwrap_or((false, false));
 
-        Ok(Game::new(player, mobs, asteroids, walls, spawner, camera_lock))
+        Ok(Game::new(player, mobs, asteroids, walls, spawner, camera_follow))
     }
 
     pub fn update(&mut self, pressed: &Vec<char>, cursor: Point) -> bool {
@@ -123,7 +123,8 @@ impl Game {
     }
 
     pub fn render<S: Screen>(&mut self, screen: &mut S) {
-        if !self.camera.get_status() {
+        let status = self.camera.get_status();
+        if status.0 || status.1 {
             self.camera.follow(self.player.get_x(), self.player.get_y());
             screen.set_offset(self.camera.get_offset());
         }
@@ -151,6 +152,10 @@ impl Game {
 
     pub fn get_player_health(&self) -> f64 {
         self.cached_actors[&self.player.get_id()].health
+    }
+
+    pub fn get_pause_status(&self) -> bool {
+        self.paused > 0
     }
 
     pub fn pause(&mut self) {
