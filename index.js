@@ -38,12 +38,6 @@ class Clock {
   }
 
   tick() {
-    if (!(this.tick_count % 300)) {
-      let now = performance.now();
-      console.log(now, this.last, this.tick_length - (now - this.last));
-      this.speak();
-    }
-
     this.tick_count += 1;
 
     let now = performance.now();
@@ -62,21 +56,24 @@ class Clock {
 
 //const clock = new Clock(1000/60);
 
-const update = (game, clock) => {
+const update = async (game, clock) => {
   clock.last = performance.now();
 
   if (game.update()) {
     window.requestAnimationFrame(() => game.render());
     window.setTimeout(() => update(game, clock), clock.tick());
   } else {
-    game.clock.speak();
-    console.log("u ded");
+    clock.speak();
+
+    let s = await fetch("./data/" + game.get_successor_args() + ".json").then(r => r.text());
+    game.next_state(s);
+    window.setTimeout(() => update(game, new Clock(1000/60)), clock.tick());
   }
 };
 
 async function init(m) {
   let p = new URLSearchParams(window.location.search);
-  let level = p.has("level") ? p.get("level") : "game";
+  let level = p.has("level") ? p.get("level") : "level1";
   let s = await fetch("./data/" + level + ".json").then(r => r.text());
 
   let game = m.start(s, ctx);

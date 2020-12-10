@@ -50,11 +50,15 @@ impl GameWrapper {
         self.game.update(&self.inputs.pressed, self.inputs.cursor)
     }
 
+    pub fn get_successor_args(&mut self) -> String {
+        self.game.get_successor_args()
+    }
+
+    pub fn next_state(&mut self, s: String) {
+        self.game = Game::from_json(s).unwrap()
+    }
+
     pub fn render(&mut self) {
-        use std::time::{Duration, SystemTime, UNIX_EPOCH};
-
-        //let mut screen = WasmScreen::new(self.screen.ctx);
-
         self.game.render(&mut self.screen);
         self.screen.draw_collision(self.game.get_broadcast());
         self.screen.draw_particles();

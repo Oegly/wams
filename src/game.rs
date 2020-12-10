@@ -24,6 +24,8 @@ pub struct Game {
     asteroids: Vec<Asteroid>,
     ship_count: u32,
     cached_actors: HashMap<u32, ShipCache>,
+    victory: Option<bool>,
+    next: String,
     camera: Camera,
     broadcast: Broadcast,
     pressed: Vec<char>,
@@ -36,6 +38,7 @@ impl Game {
         asteroids: Vec<AsteroidArgs>,
         walls: Vec<WallArgs>,
         spawner: bool,
+        next: String,
         camera_follow: (bool, bool),
     ) -> Game {
         let mut factory = ShipFactory::new();
@@ -51,6 +54,8 @@ impl Game {
             asteroids: Vec::new(),
             ship_count: 1,
             cached_actors: HashMap::new(),
+            victory: None,
+            next: next,
             camera: Camera::new(1024.0, 768.0, 1.0, camera_follow),
             broadcast: Broadcast::new(),
             pressed: Vec::new(),
@@ -79,9 +84,10 @@ impl Game {
         let asteroids: Vec<AsteroidArgs> = serde_json::from_value(json["asteroids"].clone()).unwrap_or(vec![]);
         let walls: Vec<WallArgs> = serde_json::from_value(json["walls"].clone()).unwrap_or(vec![]);
         let spawner = serde_json::from_value(json["spawner"].clone()).unwrap_or(false);
+        let next = serde_json::from_value(json["next"].clone()).unwrap_or("level1".to_string());
         let camera_follow = serde_json::from_value(json["camera_follow"].clone()).unwrap_or((false, false));
 
-        Ok(Game::new(player, mobs, asteroids, walls, spawner, camera_follow))
+        Ok(Game::new(player, mobs, asteroids, walls, spawner, next, camera_follow))
     }
 
     pub fn update(&mut self, pressed: &Vec<char>, cursor: Point) -> bool {
@@ -119,7 +125,10 @@ impl Game {
             mob.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors, &self.asteroids);
         }
 
-        true
+        match self.victory {
+            Some(_) => false,
+            None => true,
+        }
     }
 
     pub fn render<S: Screen>(&mut self, screen: &mut S) {
@@ -184,10 +193,8 @@ impl Game {
     }
 
     fn process_death(&mut self, id: u32) {
-        //println!("{}", id);
-
         if id == self.player.get_id() {
-            println!("u ded");
+            self.victory = Some(false);
             return;
         }
 
@@ -198,6 +205,22 @@ impl Game {
         };
 
         println!("Ship #{} was killed. New score: {}", id, self.score);
+
+        // How many ships are left?
+        let alive = self.mobs.iter()
+        .filter(|m| m.get_cache(1.0 / UPS as f64).health > 0.0)
+        .count();
+
+        if alive == 0 {
+            self.victory = Some(true);
+        }
+    }
+
+    pub fn get_successor_args(&mut self) -> String {
+        match self.victory.unwrap() {
+            true => self.next.to_string(),
+            false => "level1".to_string()
+        }
     }
 }
 
