@@ -20,11 +20,16 @@ extern "C" {
     fn log(a: String);
 }
 
+pub fn now() -> f64 {
+    web_sys::window().unwrap().performance().unwrap().now()
+}
+
 #[wasm_bindgen]
 pub struct GameWrapper {
     game: Game,
     screen: WasmScreen,
     inputs: Inputs,
+    start: f64,
 }
 
 #[wasm_bindgen]
@@ -35,6 +40,7 @@ impl GameWrapper {
                 game: game,
                 screen: WasmScreen::new(ctx),
                 inputs: Inputs::new(),
+                start: now(),
             },
             Err(e) => panic!(e)
         }
@@ -55,7 +61,13 @@ impl GameWrapper {
     }
 
     pub fn next_state(&mut self, s: String) {
-        self.game = Game::from_json(s).unwrap()
+        self.game = Game::from_json(s).unwrap();
+
+        // If we go from a state with following camera to one with locked, this must be reset.
+        self.screen.set_offset(Point::new(0.0, 0.0));
+
+        // Reset staring time
+        self.start = now();
     }
 
     pub fn render(&mut self) {
@@ -63,12 +75,10 @@ impl GameWrapper {
         self.screen.draw_collision(self.game.get_broadcast());
         self.screen.draw_particles();
 
-        let now = web_sys::window().unwrap().performance().unwrap().now();
-
         self.screen.write_status(
             self.game.get_score(),
             self.game.get_player_health().ceil() as u32,
-            now.floor() as u32 / 1000
+            (now() - self.start).floor() as u32 / 1000
         );
     }
 
