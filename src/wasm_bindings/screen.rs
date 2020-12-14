@@ -15,8 +15,9 @@ use crate::wasm_bindings::particle::*;
 
 use std::f64::consts::{PI,FRAC_PI_2};
 
-const FONT_COLOR: &str = "#444444";
-const HUD_COLOR: &str = "#9999bb";
+const FONT: &str = "16px Monospace";
+const FONT_COLOR: &str = "#ffffff";
+const HUD_COLOR: &str = "#404060c0";
 
 #[wasm_bindgen]
 extern "C" {
@@ -75,6 +76,17 @@ impl WasmScreen {
         self.ctx.clear_rect(0.0, 0.0, self.size.x, self.size.y);
     }
 
+    pub fn draw_widget(&self, w: widget::Widget) {
+        self.ctx.set_fill_style(&JsValue::from(&HUD_COLOR.to_string()));
+        self.ctx.fill_rect(w.x, w.y, w.x + w.width, w.y + w.height);
+        self.ctx.set_fill_style(&JsValue::from(&FONT_COLOR.to_string()));
+        self.ctx.set_font(FONT);
+
+        for p in w.text {
+            self.ctx.fill_text(&p.body, p.x, p.y);
+        }
+    }
+    
     pub fn draw_particles(&mut self) {
         for p in self.particles.iter_mut() {
             p.tick(1.0/60.0);
@@ -88,21 +100,6 @@ impl WasmScreen {
             self.ctx.arc(p.x - self.offset.x, p.y - self.offset.y, p.get_size(), 0.0, std::f64::consts::PI * 2.0).unwrap();
             self.ctx.fill();
         }
-    }
-
-    pub fn write_status(&self, score: u32, health: u32, seconds: u32) {
-        self.ctx.set_global_alpha(0.4);
-        self.ctx.set_fill_style(&JsValue::from(&HUD_COLOR.to_string()));
-        self.ctx.fill_rect(10.0, 10.0, 120.0, 90.0);
-        self.ctx.set_global_alpha(1.0);
-        self.ctx.set_fill_style(&JsValue::from(&FONT_COLOR.to_string()));
-        self.ctx.set_font("16px Arial");
-        self.ctx.fill_text(&"Score:", 24.0, 36.0);
-        self.ctx.fill_text(&format!("{:>18}", score), 24.0, 36.0);
-        self.ctx.fill_text(&"Health:", 24.0, 60.0);
-        self.ctx.fill_text(&format!("{:>18}", health), 24.0, 60.0);
-        self.ctx.fill_text(&"Time:", 24.0, 84.0);
-        self.ctx.fill_text(&format!("{:>15}:{:02}", seconds / 60, seconds % 60), 24.0, 84.0);
     }
 
     pub fn draw_collision(&mut self, cast: &Broadcast) {

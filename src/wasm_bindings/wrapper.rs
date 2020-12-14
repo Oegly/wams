@@ -12,6 +12,7 @@ use crate::ship::*;
 use crate::shape::*;
 use crate::storage::*;
 use crate::broadcast::*;
+use crate::wasm_bindings::widget::*;
 use crate::wasm_bindings::screen::*;
 
 #[wasm_bindgen]
@@ -75,11 +76,11 @@ impl GameWrapper {
         self.screen.draw_collision(self.game.get_broadcast());
         self.screen.draw_particles();
 
-        self.screen.write_status(
+        self.screen.draw_widget(Widget::new_status(
             self.game.get_score(),
             self.game.get_player_health().ceil() as u32,
             (now() - self.start).floor() as u32 / 1000
-        );
+        ));
     }
 
     pub fn resize(&mut self) {
