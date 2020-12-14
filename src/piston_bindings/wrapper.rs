@@ -30,6 +30,7 @@ const UPS: u64 = 60;
 struct GameWrapper {
     game: Game,
     inputs: Inputs,
+    state: GameState,
     gl: Rc<RefCell<GlGraphics>>,
 }
 
@@ -49,6 +50,7 @@ impl GameWrapper {
         GameWrapper {
             game: Game::from_json(content).expect("Invalid JSON."),
             inputs: Inputs::new(),
+            state: GameState::Running,
             gl: Rc::new(RefCell::new(GlGraphics::new(OPENGL_VERSION))),
         }
     }
@@ -83,7 +85,19 @@ impl GameWrapper {
     }
 
     pub fn update(&mut self, u: &UpdateArgs) -> bool {
-        self.game.update(&self.inputs.pressed, self.inputs.cursor)
+        match self.state {
+            GameState::Running => {
+                self.game.update(&self.inputs.pressed, self.inputs.cursor)
+            },
+            GameState::Paused => true,
+        }
+    }
+
+    pub fn pause(&mut self) {
+        match self.state {
+            GameState::Running => {self.state = GameState::Paused},
+            GameState::Paused => {self.state = GameState::Running},
+        }
     }
 
     pub fn render(&mut self, r: RenderArgs) {
@@ -99,7 +113,7 @@ impl GameWrapper {
             &Button::Keyboard(Key::Down) | &Button::Keyboard(Key::S) => self.inputs.press('B'),
             &Button::Keyboard(Key::Left) | &Button::Keyboard(Key::A) => self.inputs.press('L'),
             &Button::Keyboard(Key::Right) | &Button::Keyboard(Key::D) => self.inputs.press('R'),
-            &Button::Keyboard(Key::P) => {self.inputs.press('P'); self.game.pause()},
+            &Button::Keyboard(Key::P) => {self.pause()},
             &Button::Mouse(MouseButton::Left) => self.inputs.press('M'),
             _ => (),
         }
@@ -115,7 +129,6 @@ impl GameWrapper {
             &Button::Keyboard(Key::Down) | &Button::Keyboard(Key::S) => self.inputs.release('B'),
             &Button::Keyboard(Key::Left) | &Button::Keyboard(Key::A) => self.inputs.release('L'),
             &Button::Keyboard(Key::Right) | &Button::Keyboard(Key::D) => self.inputs.release('R'),
-            &Button::Keyboard(Key::P) => self.inputs.release('P'),
             &Button::Mouse(MouseButton::Left) => self.inputs.release('M'),
             _ => (),
         }
@@ -164,4 +177,9 @@ pub fn main() {
     GameWrapper::new().init(&mut window);
 
     println!("Thank you for playing!");
+}
+
+pub enum GameState {
+    Running,
+    Paused,
 }

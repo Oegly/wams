@@ -15,8 +15,6 @@ const UPS: u64 = 60;
 
 pub struct Game {
     tick: u64,
-    paused: u64,
-    last_pause: u64,
     player: Ship,
     score: u32,
     spawner: ShipSpawner,
@@ -45,8 +43,6 @@ impl Game {
 
         let mut game = Game {
             tick: 0,
-            paused: 0,
-            last_pause: 0,
             player: ShipBuilder::from(&player).tag(1).build(),
             score: 0,
             spawner: ShipSpawner::new(spawner),
@@ -91,11 +87,6 @@ impl Game {
     }
 
     pub fn update(&mut self, pressed: &Vec<char>, cursor: Point) -> bool {
-        if self.paused > 0 {
-            self.paused += 1;
-            return true;
-        }
-
         self.tick += 1;
 
         self.broadcast.update(self.tick);
@@ -161,14 +152,6 @@ impl Game {
 
     pub fn get_player_health(&self) -> f64 {
         self.cached_actors[&self.player.get_id()].health
-    }
-
-    pub fn get_pause_status(&self) -> bool {
-        self.paused > 0
-    }
-
-    pub fn pause(&mut self) {
-        self.paused = (self.paused == 0) as u64;
     }
 
     fn create_ship(&mut self, ship: ShipBuilder) {

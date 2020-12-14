@@ -28,9 +28,11 @@ pub fn now() -> f64 {
 #[wasm_bindgen]
 pub struct GameWrapper {
     game: Game,
+    state: GameState,
+    last_pause: f64,
     screen: WasmScreen,
     inputs: Inputs,
-    start: f64,
+    idle: f64,
 }
 
 #[wasm_bindgen]
@@ -39,22 +41,36 @@ impl GameWrapper {
         match Game::from_json(s) {
             Ok(game) => GameWrapper {
                 game: game,
+                state: GameState::Running,
+                last_pause: 0.0,
                 screen: WasmScreen::new(ctx),
                 inputs: Inputs::new(),
-                start: now(),
+                idle: now(),
             },
             Err(e) => panic!(e)
         }
     }
 
     pub fn update(&mut self) -> bool {
-        let mut pressed = Vec::new();
-
-        if self.inputs.pressed.iter().any(|&b| b == 'M')  {
-            pressed.push('M')
+        match self.state {
+            GameState::Running => {
+                self.game.update(&self.inputs.pressed, self.inputs.cursor)
+            },
+            GameState::Paused => true,
         }
+    }
 
-        self.game.update(&self.inputs.pressed, self.inputs.cursor)
+    pub fn pause(&mut self) {
+        match self.state {
+            GameState::Running => {
+                self.state = GameState::Paused;
+                self.last_pause = now();
+            },
+            GameState::Paused => {
+                self.state = GameState::Running;
+                self.idle += now() - self.last_pause;
+            },
+        }
     }
 
     pub fn get_successor_args(&mut self) -> String {
@@ -68,7 +84,7 @@ impl GameWrapper {
         self.screen.set_offset(Point::new(0.0, 0.0));
 
         // Reset staring time
-        self.start = now();
+        self.idle = now();
     }
 
     pub fn render(&mut self) {
@@ -76,10 +92,24 @@ impl GameWrapper {
         self.screen.draw_collision(self.game.get_broadcast());
         self.screen.draw_particles();
 
-        self.screen.draw_widget(Widget::new_status(
+        match self.state {
+            GameState::Paused => {
+                self.screen.draw_widget(Widget::pause(
+                    self.screen.size.x, self.screen.size.y
+                ))
+            },
+            _ => ()
+        };
+
+        let time = match self.state {
+            GameState::Running => now() - self.idle,
+            GameState::Paused => self.last_pause - self.idle,
+        };
+
+        self.screen.draw_widget(Widget::status(
             self.game.get_score(),
             self.game.get_player_health().ceil() as u32,
-            (now() - self.start).floor() as u32 / 1000
+            time.floor() as u32 / 1000
         ));
     }
 
@@ -93,7 +123,7 @@ impl GameWrapper {
             "arrowdown" | "s" => self.inputs.press('B'),
             "arrowleft" | "a"=> self.inputs.press('L'),
             "arrowright" | "d"=> self.inputs.press('R'),
-            "p" => {self.inputs.press('P'); self.game.pause()},
+            "p" => {self.pause()},
             _ => log(format!("btn: {}", btn.to_string())),
         }
     }
@@ -104,7 +134,6 @@ impl GameWrapper {
             "arrowdown" | "s" => self.inputs.release('B'),
             "arrowleft" | "a" => self.inputs.release('L'),
             "arrowright" | "d" => self.inputs.release('R'),
-            "p" => self.inputs.release('P'),
             _ => (),
         }
     }
@@ -150,4 +179,9 @@ impl Inputs {
     pub fn move_cursor(&mut self, x: f64, y: f64) {
         self.cursor = Point::new(x, y);
     }
+}
+
+enum GameState {
+    Running,
+    Paused,
 }

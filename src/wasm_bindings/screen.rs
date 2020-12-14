@@ -48,9 +48,9 @@ fn get_alpha(hp: f64, category: ShipCategory) -> f64 {
 
 pub struct WasmScreen {
     ctx: web_sys::CanvasRenderingContext2d,
-    size: Point,
-    offset: Point,
     particles: Vec<Particle>,
+    pub size: Point,
+    pub offset: Point,
 }
 
 impl WasmScreen {
@@ -78,12 +78,12 @@ impl WasmScreen {
 
     pub fn draw_widget(&self, w: widget::Widget) {
         self.ctx.set_fill_style(&JsValue::from(&HUD_COLOR.to_string()));
-        self.ctx.fill_rect(w.x, w.y, w.x + w.width, w.y + w.height);
+        self.ctx.fill_rect(w.x, w.y, w.width, w.height);
         self.ctx.set_fill_style(&JsValue::from(&FONT_COLOR.to_string()));
         self.ctx.set_font(FONT);
 
         for p in w.text {
-            self.ctx.fill_text(&p.body, p.x, p.y);
+            self.ctx.fill_text(&p.body, w.x + p.x, w.y + p.y);
         }
     }
     
