@@ -36,7 +36,7 @@ impl Asteroid {
             _ => w,
         };
 
-        let mut rng = StdRng::seed_from_u64(x as u64 + y as u64);
+        let mut rng = StdRng::seed_from_u64((x + y).abs() as u64);
 
         let mut ret: Vec<Asteroid> = Vec::new();
 
