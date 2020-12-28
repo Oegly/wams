@@ -25,24 +25,15 @@ extern "C" {
     fn log(a: String);
 }
 
-fn get_pallette(category: ShipCategory) ->  [String; 2] {
-    match category {
-        ShipCategory::Bell => ["#aa4444".to_string(), "#993333".to_string()],
-        ShipCategory::Jalapeno => ["#55bb55".to_string(), "#44aa44".to_string()],
-        ShipCategory::Cayenne => ["#ee4444".to_string(), "#dd5555".to_string()],
-    }
-}
+const MAX_HEALTH: [f64; 3] = [100.0, 25.0, 200.0];
+const PALLETTE: [[&str; 2]; 3] = [
+    ["#aa4444", "#993333"],
+    ["#55bb55", "#44aa44"],
+    ["#ee4444", "#dd5555"],
+];
 
-fn get_max_health(category: ShipCategory) -> f64 {
-    match category {
-        ShipCategory::Bell => 100.0,
-        ShipCategory::Jalapeno => 25.0,
-        ShipCategory::Cayenne => 200.0,
-    }
-}
-
-fn get_alpha(hp: f64, category: ShipCategory) -> f64 {
-    let percentage_left = hp.max(0.0) / get_max_health(category);
+fn get_alpha(hp: f64, category: usize) -> f64 {
+    let percentage_left = hp.max(0.0) / MAX_HEALTH[category];//get_max_health(category);
     percentage_left * 0.8 + 0.2
 }
 
@@ -136,14 +127,14 @@ impl Screen for WasmScreen {
         x -= self.offset.x;
         y -= self.offset.y;
 
-        let colors = &get_pallette(ship.category);
+        let colors = PALLETTE[ship.category as usize];//&get_pallette(ship.category);
         let alpha = get_alpha(ship.health, ship.category);
 
         self.ctx.translate(x, y);
         self.ctx.rotate(ship.direction + FRAC_PI_2);
         
         self.ctx.set_global_alpha(alpha);
-        self.ctx.set_fill_style(&JsValue::from(&colors[1]));
+        self.ctx.set_fill_style(&JsValue::from(&colors[1].to_string()));
 
         // Nozzle
         self.ctx.begin_path();
@@ -162,7 +153,7 @@ impl Screen for WasmScreen {
         self.ctx.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
         // Body
-        self.ctx.set_fill_style(&JsValue::from(&colors[0]));
+        self.ctx.set_fill_style(&JsValue::from(&colors[0].to_string()));
         self.ctx.begin_path();
         self.ctx.arc(x, y, r, 0.0, std::f64::consts::PI * 2.0).unwrap();
         self.ctx.fill();

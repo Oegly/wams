@@ -182,8 +182,8 @@ impl Game {
         }
 
         self.score += match self.cached_actors[&id].category {
-            ShipCategory::Jalapeno => 100,
-            ShipCategory::Cayenne => 300,
+            1 => 100,
+            2 => 300,
             _ => 0,
         };
 

@@ -4,7 +4,7 @@ use crate::asteroid::*;
 use crate::ship::*;
 
 #[derive(Debug,Deserialize)]
-pub struct ShipArgs(pub u8, pub f64, pub f64, #[serde(default)] pub (f64, f64), #[serde(default)] pub f64);
+pub struct ShipArgs(pub usize, pub f64, pub f64, #[serde(default)] pub (f64, f64), #[serde(default)] pub f64);
 
 #[derive(Debug,Deserialize)]
 pub struct AsteroidArgs(pub f64, pub f64, pub f64);

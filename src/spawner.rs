@@ -26,11 +26,11 @@ impl ShipSpawner {
         let d = (cast.tick as f64 / 360.0 ) % TAU;
         let v = Vector::new(d, m);
 
-        let cat: ShipCategory;
+        let cat: usize;
         if cast.tick % 1080 == 0 {
-            cat = ShipCategory::Cayenne;
+            cat = 2;
         } else {
-            cat = ShipCategory::Jalapeno;
+            cat = 1;
         }
         println!("{:?}, {}", cat, cast.tick);
         let ship = ShipBuilder::new(cat).place(v.get_dx() + 512.0, v.get_dy() + 384.0);

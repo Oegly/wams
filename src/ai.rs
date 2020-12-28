@@ -8,11 +8,12 @@ use crate::ship::*;
 
 use std::f64::consts::{PI,FRAC_PI_2,TAU};
 
-pub fn build_brain(category: ShipCategory, id: u32) -> Box<dyn Brain> {
+pub fn build_brain(category: usize, id: u32) -> Box<dyn Brain> {
     match category {
-        ShipCategory::Bell => Box::new(BellBrain::new(id)),
-        ShipCategory::Jalapeno => Box::new(JalapenoBrain::new(id)),
-        ShipCategory::Cayenne => Box::new(CayenneBrain::new(id)),
+        BELL => Box::new(BellBrain::new(id)),
+        JALAPENO => Box::new(JalapenoBrain::new(id)),
+        CAYENNE => Box::new(CayenneBrain::new(id)),
+        _ => panic!("Invalid int: {:}", category),
     }
 }
 
@@ -26,7 +27,6 @@ pub enum Directive {
 
 pub trait Brain {
     fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) -> Vec<Directive>;
-    fn box_clone(&self) -> Box<dyn Brain>;
 
     fn target_visible(&self, target: Point, me: Point, props: &Vec<Asteroid>) -> bool {
         let path = Segment::new(target, me);
@@ -40,13 +40,6 @@ pub trait Brain {
         true
     }
 }
-
-impl Clone for Box<dyn Brain> {
-    fn clone(&self) -> Box<dyn Brain> {
-        self.box_clone()
-    }
-}
-
 
 impl std::fmt::Debug for dyn Brain {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
@@ -95,10 +88,6 @@ impl Brain for BellBrain {
             return ret;
         }
     }
-
-    fn box_clone(&self) -> Box<dyn Brain> {
-        Box::new((*self).clone())
-    }
 }
 
 #[derive(Clone,Debug)]
@@ -132,10 +121,6 @@ impl Brain for JalapenoBrain {
             true => vec![Directive::Aim(self.player_position), Directive::Thrust(1.0 * time_delta)],
             false => vec![Directive::Rotate(FRAC_PI_2 * time_delta)],
         }
-    }
-
-    fn box_clone(&self) -> Box<dyn Brain> {
-        Box::new((*self).clone())
     }
 }
 
@@ -192,9 +177,5 @@ impl Brain for CayenneBrain {
             true => self.chase(time_delta, &actors[&self.id], self.player_position),
             false => vec![Directive::Rotate(FRAC_PI_2 * time_delta)],
         }
-    }
-
-    fn box_clone(&self) -> Box<dyn Brain> {
-        Box::new((*self).clone())
     }
 }

@@ -9,34 +9,19 @@ use crate::storage::*;
 
 use std::f64::consts::{PI,FRAC_PI_2,TAU};
 
-#[repr(usize)]
-#[derive(Debug,Copy,Clone,Eq,PartialEq,Hash)]
-pub enum ShipCategory {
-    Bell = 0,
-    Jalapeno = 1,
-    Cayenne = 2,
-}
-
-impl From<u8> for ShipCategory {
-    fn from(u: u8) -> ShipCategory {
-        match u {
-            0 => ShipCategory::Bell,
-            1 => ShipCategory::Jalapeno,
-            2 => ShipCategory::Cayenne,
-            _ => ShipCategory::Bell,
-        }
-    }
-}
+pub const BELL: usize = 0;
+pub const JALAPENO: usize = 1;
+pub const CAYENNE: usize = 2;
 
 const RADIUS: [f64; 3] = [18.0, 16.0, 20.0];
 const HEALTH: [f64; 3] = [100.0, 25.0, 200.0];
 const FORCE: [f64; 3] = [80.0, 24.0, 16.0];
 const MASS: [f64; 3] = [1.0, 0.8, 1.2];
 
-#[derive(Clone,Debug)]
+#[derive(Debug)]
 pub struct Ship {
     id: u32,
-    category: ShipCategory,
+    category: usize,
     brain: Box<dyn Brain>,
     vector: Vector,
     circle: Circle,
@@ -264,17 +249,17 @@ impl std::fmt::Display for Ship {
 #[derive(Clone,Debug)]
 pub struct ShipBuilder {
     id: u32,
-    category: ShipCategory,
+    category: usize,
     pos: Point,
     vector: Vector,
 }
 
 impl ShipBuilder {
     pub fn default() -> ShipBuilder {
-        ShipBuilder::new(ShipCategory::Bell)
+        ShipBuilder::new(0)
     }
 
-    pub fn new(category: ShipCategory) -> ShipBuilder {
+    pub fn new(category: usize) -> ShipBuilder {
         ShipBuilder {
             id: 0,
             category: category,
@@ -321,7 +306,7 @@ impl From<&ShipArgs> for ShipBuilder {
     fn from(s: &ShipArgs) -> ShipBuilder {
         ShipBuilder {
             id: 0,
-            category: ShipCategory::from(s.0),
+            category: s.0,
             pos: Point::new(s.1, s.2),
             vector: Vector::from(s.3),
         }
@@ -342,7 +327,7 @@ impl ShipFactory {
     pub fn new_bell(&mut self, x: f64, y: f64) -> Ship {
         self.count += 1;
 
-        ShipBuilder::new(ShipCategory::Bell)
+        ShipBuilder::new(BELL)
         .place(x, y)
         .tag(self.count)
         .build()
@@ -351,7 +336,7 @@ impl ShipFactory {
     pub fn new_jalapeno(&mut self, x: f64, y: f64) -> Ship {
         self.count += 1;
 
-        ShipBuilder::new(ShipCategory::Jalapeno)
+        ShipBuilder::new(JALAPENO)
         .place(x, y)
         .tag(self.count)
         .build()
@@ -360,7 +345,7 @@ impl ShipFactory {
     pub fn new_cayenne(&mut self, x: f64, y: f64) -> Ship {
         self.count += 1;
 
-        ShipBuilder::new(ShipCategory::Cayenne)
+        ShipBuilder::new(CAYENNE)
         .place(x, y)
         .tag(self.count)
         .build()
@@ -369,7 +354,7 @@ impl ShipFactory {
 
 pub struct ShipCache {
     pub id: u32,
-    pub category: ShipCategory,
+    pub category: usize,
     pub vector: Vector,
     pub circle: Circle,
     pub health: f64,
@@ -418,11 +403,11 @@ mod tests {
     use crate::physics::*;
 
     fn collide(a: Vector, b: Vector) {
-        let mut a = ShipBuilder::new(ShipCategory::Jalapeno)
+        let mut a = ShipBuilder::new(1)
         .tag(0)
         .build();
 
-        let mut b = ShipBuilder::new(ShipCategory::Jalapeno)
+        let mut b = ShipBuilder::new(1)
         .place(90.0, 0.0)
         .tag(1)
         .build();

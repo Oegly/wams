@@ -18,25 +18,15 @@ use crate::ship::*;
 use std::f64::consts::{PI,FRAC_PI_2};
 
 const BG_COLOR: [f32; 4] = [0.6, 0.6, 0.7, 1.0];
+const MAX_HEALTH: [f32; 3] = [100.0, 25.0, 200.0];
+const PALLETTE: [[[f32; 4]; 2]; 3] = [
+    [[0.8, 0.4, 0.4, 1.0], [0.6, 0.2, 0.2, 1.0]],
+    [[0.38, 0.49, 0.2, 1.0], [0.23, 0.39, 0.03, 1.0]],
+    [[0.65, 0.1, 0.1, 1.0], [0.6, 0.2, 0.2, 1.0]],
+];
 
-fn get_pallette(category: ShipCategory) -> [[f32; 4]; 2]{
-    match category {
-        ShipCategory::Bell => [[0.8, 0.4, 0.4, 1.0], [0.6, 0.2, 0.2, 1.0]],
-        ShipCategory::Jalapeno => [[0.38, 0.49, 0.2, 1.0], [0.23, 0.39, 0.03, 1.0]],
-        ShipCategory::Cayenne => [[0.65, 0.1, 0.1, 1.0], [0.6, 0.2, 0.2, 1.0]],
-    }
-}
-
-fn get_max_health(category: ShipCategory) -> f32 {
-    match category {
-        ShipCategory::Bell => 100.0,
-        ShipCategory::Jalapeno => 25.0,
-        ShipCategory::Cayenne => 200.0,
-    }
-}
-
-fn change_alpha(color: [f32; 4], hp: f32, category: ShipCategory) -> [f32; 4] {
-    let percentage_left = hp.max(0.0) / get_max_health(category);
+fn change_alpha(color: [f32; 4], hp: f32, category: usize) -> [f32; 4] {
+    let percentage_left = hp.max(0.0) / MAX_HEALTH[category];
     [color[0], color[1], color[2], percentage_left * 0.8 + 0.2]
 }
 
@@ -80,7 +70,7 @@ impl Screen for PistonScreen {
         _x -= self.offset.x;
         _y -= self.offset.y;
 
-        let colors = get_pallette(ship.category);
+        let colors = PALLETTE[ship.category as usize];
 
         let ship_color = change_alpha(colors[0], ship.health as f32, ship.category);
         let wing_color = change_alpha(colors[1], ship.health as f32, ship.category);
