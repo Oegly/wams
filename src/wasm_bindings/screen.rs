@@ -25,15 +25,21 @@ extern "C" {
     fn log(a: String);
 }
 
-const MAX_HEALTH: [f64; 3] = [100.0, 25.0, 200.0];
-const PALLETTE: [[&str; 2]; 3] = [
+const PALETTE: [[&str; 2]; 3] = [
     ["#aa4444", "#993333"],
     ["#55bb55", "#44aa44"],
     ["#ee4444", "#dd5555"],
 ];
 
+fn get_palette(category: usize) -> [String; 2] {
+    match PALETTE.get(category) {
+        Some(p) => [p[0].to_string(), p[1].to_string()],
+        None => ["#555555".to_string(), "#333333".to_string()]
+    }
+}
+
 fn get_alpha(hp: f64, category: usize) -> f64 {
-    let percentage_left = hp.max(0.0) / MAX_HEALTH[category];//get_max_health(category);
+    let percentage_left = hp.max(0.0) / HEALTH[category];//get_max_health(category);
     percentage_left * 0.8 + 0.2
 }
 
@@ -127,14 +133,14 @@ impl Screen for WasmScreen {
         x -= self.offset.x;
         y -= self.offset.y;
 
-        let colors = PALLETTE[ship.category as usize];//&get_pallette(ship.category);
+        let colors = get_palette(ship.category as usize);
         let alpha = get_alpha(ship.health, ship.category);
 
         self.ctx.translate(x, y);
         self.ctx.rotate(ship.direction + FRAC_PI_2);
         
         self.ctx.set_global_alpha(alpha);
-        self.ctx.set_fill_style(&JsValue::from(&colors[1].to_string()));
+        self.ctx.set_fill_style(&JsValue::from(&colors[1]));
 
         // Nozzle
         self.ctx.begin_path();
@@ -153,11 +159,18 @@ impl Screen for WasmScreen {
         self.ctx.set_transform(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
         // Body
-        self.ctx.set_fill_style(&JsValue::from(&colors[0].to_string()));
+        self.ctx.set_fill_style(&JsValue::from(&colors[0]));
         self.ctx.begin_path();
         self.ctx.arc(x, y, r, 0.0, std::f64::consts::PI * 2.0).unwrap();
         self.ctx.fill();
 
+        /*self.ctx.set_global_alpha(0.2);
+
+        self.ctx.set_fill_style(&JsValue::from(&colors[0]));
+        self.ctx.begin_path();
+        self.ctx.arc(x, y, ship.vector.magnitude, 0.0, std::f64::consts::PI * 2.0).unwrap();
+        self.ctx.fill();
+        */
         self.ctx.set_global_alpha(1.0);
     }
 
