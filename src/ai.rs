@@ -19,6 +19,7 @@ pub fn build_brain(category: usize, id: u32) -> Box<dyn Brain> {
 
 #[derive(Clone,Copy,Debug,PartialEq)]
 pub enum Directive {
+    SetDirection(f64),
     Rotate(f64),
     Thrust(f64),
     Brake,
@@ -144,25 +145,23 @@ impl CayenneBrain {
 
     pub fn chase(&mut self, time_delta: f64, me: &ShipCache, target: Point) -> Vec<Directive> {
         // How to get to target (from where we are now)
-        let ideal_path = Segment::new(me.get_point(), target);
-
-        // Where would we go if we thrusted now?
-        let mut plan = me.vector.clone();
-        plan.add_vector(Vector::new(ideal_path.get_direction(), me.force * time_delta));
-        let planned_path = Segment::new(
-            Point::new(me.circle.x + plan.get_dx(), me.circle.y + plan.get_dy()),
-            target
-        );
+        let ideal_path = Vector::from(target - me.get_point());
+        let plan = me.vector + Vector::new(ideal_path.direction, me.force * time_delta);
+        
+        //let mut offset = me.vector - ideal_path;
+        //offset.magnitude *= 2.0;
+        //offset.direction += PI;
 
         // Would we be closer to the target?
-        if planned_path.get_length() < ideal_path.get_length() {
+        if (ideal_path - plan).magnitude < ideal_path.magnitude {
             return vec![
-                Directive::Aim(target),
+                Directive::SetDirection(ideal_path.direction),
                 Directive::Thrust(1.0 * time_delta)
             ];
         }
 
         vec![Directive::Brake]
+
     }
 }
 

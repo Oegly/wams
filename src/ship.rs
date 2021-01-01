@@ -13,10 +13,13 @@ pub const BELL: usize = 0;
 pub const JALAPENO: usize = 1;
 pub const CAYENNE: usize = 2;
 
-const RADIUS: [f64; 3] = [18.0, 16.0, 20.0];
-const HEALTH: [f64; 3] = [100.0, 25.0, 200.0];
-const FORCE: [f64; 3] = [80.0, 24.0, 16.0];
-const MASS: [f64; 3] = [1.0, 0.8, 1.2];
+// Fancy future update:
+pub const CHICKPEA: usize = 3;
+
+pub const RADIUS: [f64; 4] = [18.0, 16.0, 20.0, 12.0];
+pub const HEALTH: [f64; 4] = [100.0, 25.0, 200.0, 80.0];
+pub const FORCE: [f64; 4] = [80.0, 24.0, 16.0, 24.0];
+pub const MASS: [f64; 4] = [1.0, 0.8, 1.2, 0.4];
 
 #[derive(Debug)]
 pub struct Ship {
@@ -210,6 +213,7 @@ impl Ship {
 
         for d in &actions {
             match d {
+                Directive::SetDirection(n) => self.direction = *n,
                 Directive::Rotate(n) => self.rotate(*n),
                 Directive::Thrust(n) => self.thrust(*n),
                 Directive::Brake => self.brake(time_delta),

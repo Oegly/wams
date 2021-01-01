@@ -38,10 +38,6 @@ impl Point {
         }
     }
 
-    pub fn from(t: (f64, f64)) -> Point {
-        Point::new(t.0, t.1)
-    }
-
     pub fn get_x(&self) -> f64 {
         self.x
     }
@@ -61,6 +57,58 @@ impl Point {
     pub fn add_assign(&mut self, other: Point) {
         self.x += other.x;
         self.y += other.y;
+    }
+}
+
+impl From<Vector> for Point {
+    fn from(v: Vector) -> Point {
+        Point::new(v.get_dx(), v.get_dy())
+    }
+}
+
+impl From<(f64, f64)> for Point {
+    fn from(t: (f64, f64)) -> Point {
+        Point::new(t.0, t.1)
+    }
+}
+
+impl std::ops::Add for Point {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        }
+    }
+}
+
+impl std::ops::AddAssign for Point {
+    fn add_assign(&mut self, other: Self) {
+        *self = Self {
+            x: self.x + other.x,
+            y: self.y + other.y,
+        };
+    }
+}
+
+impl std::ops::Sub for Point {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+}
+
+impl std::ops::SubAssign for Point {
+    fn sub_assign(&mut self, other: Self) {
+        *self = Self {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        };
     }
 }
 

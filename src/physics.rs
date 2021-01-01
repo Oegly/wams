@@ -1,8 +1,8 @@
-use std::f64::consts::{PI,FRAC_PI_2};
+use crate::shape::*;
 
-const TAU: f64 = PI * 2.0;
+use std::f64::consts::{PI,FRAC_PI_2,TAU};
 
-#[derive(Clone,Copy,Debug)]
+#[derive(Clone,Copy,Debug,Default)]
 pub struct Vector {
     pub direction: f64,
     pub magnitude: f64,
@@ -77,9 +77,67 @@ impl Vector {
     }
 }
 
+impl From<Point> for Vector {
+    fn from(p: Point) -> Vector {
+        Vector::from_deltas(p.x, p.y)
+    }
+}
+
 impl From<(f64, f64)> for Vector {
     fn from(t: (f64, f64)) -> Vector {
         Vector::new(t.0, t.1)
+    }
+}
+
+impl std::ops::Add for Vector {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        let _x: f64 = self.get_dx() + other.get_dx();
+        let _y: f64 = self.get_dy() + other.get_dy();
+
+        Self {
+            direction: _y.atan2(_x),
+            magnitude: _x.hypot(_y),
+        }
+    }
+}
+
+impl std::ops::AddAssign for Vector {
+    fn add_assign(&mut self, other: Self) {
+        let _x: f64 = self.get_dx() + other.get_dx();
+        let _y: f64 = self.get_dy() + other.get_dy();
+
+        *self = Self {
+            direction: _y.atan2(_x),
+            magnitude: _x.hypot(_y),
+        };
+    }
+}
+
+impl std::ops::Sub for Vector {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        let _x: f64 = self.get_dx() - other.get_dx();
+        let _y: f64 = self.get_dy() - other.get_dy();
+
+        Self {
+            direction: _y.atan2(_x),
+            magnitude: _x.hypot(_y),
+        }
+    }
+}
+
+impl std::ops::SubAssign for Vector {
+    fn sub_assign(&mut self, other: Self) {
+        let _x: f64 = self.get_dx() - other.get_dx();
+        let _y: f64 = self.get_dy() - other.get_dy();
+
+        *self = Self {
+            direction: _y.atan2(_x),
+            magnitude: _x.hypot(_y),
+        };
     }
 }
 
