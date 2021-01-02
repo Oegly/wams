@@ -13,6 +13,7 @@ pub fn build_brain(category: usize, id: u32) -> Box<dyn Brain> {
         BELL => Box::new(BellBrain::new(id)),
         JALAPENO => Box::new(JalapenoBrain::new(id)),
         CAYENNE => Box::new(CayenneBrain::new(id)),
+        CHICKPEA => Box::new(ChickpeaBrain::new(id)),
         _ => panic!("Invalid int: {:}", category),
     }
 }
@@ -176,5 +177,63 @@ impl Brain for CayenneBrain {
             true => self.chase(time_delta, &actors[&self.id], self.player_position),
             false => vec![Directive::Rotate(FRAC_PI_2 * time_delta)],
         }
+    }
+}
+
+#[derive(Clone,Debug)]
+pub struct ChickpeaBrain {
+    id: u32,
+    active: bool,
+    previous_collisons: Vec<u32>,
+}
+
+impl ChickpeaBrain {
+    fn new(id: u32) -> ChickpeaBrain {
+        ChickpeaBrain {
+            id: id,
+            active: false,
+            previous_collisons: Vec::new(),
+        }
+    }
+
+    fn chase(&mut self, actors: &HashMap<u32, ShipCache>, target_id: &u32) -> Vector {
+        let me = actors[&self.id].get_point();
+        let target = &actors[target_id];
+        let speed = actors[&self.id].vector.magnitude.abs();
+        let horizon = (speed / FORCE[CHICKPEA]).max(FORCE[CHICKPEA] * 4.0);
+
+        actors.iter()
+        .filter(
+            // Only separate from your own class
+            |(id, ship)| match ship.category {
+                CHICKPEA => true,
+                _ => false
+            } &&
+            // Who are not me
+            self.id != ship.id &&
+            // No further than 25 pixels away
+            me.distance(ship.get_point()) - RADIUS[CHICKPEA] <= horizon &&
+            // If the target is between another ship, don't bother
+            !Segment::new(me, ship.get_point()).check_collision_circle(&target.circle)
+        )
+        .fold(Vector::from(target.get_point() - me), |sum, (id, ship)| {
+            sum + Vector::from(me - ship.get_point())
+        })
+    }
+}
+
+impl Brain for ChickpeaBrain {
+    fn think(&mut self, time_delta: f64, cast: &Broadcast, actors: &HashMap<u32, ShipCache>, props: &Vec<Asteroid>) -> Vec<Directive> {
+        let me = actors[&self.id].get_point();
+        let d = self.chase(actors, &cast.player_id.unwrap());
+
+        if d.magnitude > 0.0 {
+            return vec![
+                Directive::SetDirection(d.direction),
+                Directive::Thrust(1.0 * time_delta)
+            ];
+        }
+
+        vec![]//*Directive::Aim(cast.player_position),*/ Directive::Thrust(1.0 * time_delta)]
     }
 }
