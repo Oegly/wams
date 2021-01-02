@@ -1,6 +1,5 @@
 use wasm_bindgen::prelude::*;
-use crate::physics::*;
-use crate::shape::*;
+use crate::physics::{Circle,Point,Vector};
 
 use std::f64::consts::{PI,FRAC_PI_2,TAU};
 
@@ -36,6 +35,10 @@ impl Particle {
 
     pub fn get_size(&self) -> f64 {
         self.size * ((self.lifetime - self.elapsed) / self.lifetime)
+    }
+
+    pub fn get_alpha(&self) -> f64 {
+        1.0 //(self.lifetime - self.elapsed) / self.lifetime
     }
 
     pub fn new_trail(x: f64, y: f64, mut vector: Vector) -> Particle {

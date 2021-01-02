@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use rand::{Rng, SeedableRng, rngs::StdRng};
 
-use crate::physics::*;
-use crate::shape::*;
+use crate::physics::Circle;
 use crate::storage::*;
 
 use std::f64::consts::{PI,FRAC_PI_2,TAU};

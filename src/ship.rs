@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use crate::ai::*;
 use crate::asteroid::*;
 use crate::broadcast::*;
-use crate::physics::*;
-use crate::shape::*;
+use crate::physics::{Circle,Point,Rectangle,Shape,Vector};
 use crate::storage::*;
 
 use std::f64::consts::{PI,FRAC_PI_2,TAU};
@@ -404,7 +403,7 @@ impl std::fmt::Display for ShipCache {
 #[cfg(test)]
 mod tests {
     use crate::ship::*;
-    use crate::physics::*;
+    use crate::physics::Circle;
 
     fn collide(a: Vector, b: Vector) {
         let mut a = ShipBuilder::new(1)

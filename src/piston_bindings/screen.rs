@@ -11,14 +11,12 @@ use opengl_graphics::{GlGraphics, OpenGL};
 use crate::asteroid::*;
 use crate::camera::*;
 use crate::game::*;
-use crate::physics::*;
-use crate::shape::*;
+use crate::physics::{Point,Vector};
 use crate::ship::*;
 
 use std::f64::consts::{PI,FRAC_PI_2};
 
 const BG_COLOR: [f32; 4] = [0.6, 0.6, 0.7, 1.0];
-//const MAX_HEALTH: [f32; 3] = [100.0, 25.0, 200.0];
 const PALETTE: [[[f32; 4]; 2]; 3] = [
     [[0.8, 0.4, 0.4, 1.0], [0.6, 0.2, 0.2, 1.0]],
     [[0.38, 0.49, 0.2, 1.0], [0.23, 0.39, 0.03, 1.0]],

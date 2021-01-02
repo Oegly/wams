@@ -7,11 +7,11 @@ use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
-use crate::game::*;
-use crate::ship::*;
-use crate::shape::*;
-use crate::storage::*;
 use crate::broadcast::*;
+use crate::game::*;
+use crate::physics::Point;
+use crate::ship::*;
+use crate::storage::*;
 use crate::wasm_bindings::widget::*;
 use crate::wasm_bindings::screen::*;
 
@@ -78,6 +78,8 @@ impl GameWrapper {
     }
 
     pub fn next_state(&mut self, s: String) {
+        log(format!("Ran {:} ticks over {:} ms.\nAn average of {:.4} tps.",
+        self.game.get_broadcast().tick, now() - self.idle, self.game.get_broadcast().tick as f64 / ((now() - self.idle) / 1000.0)));
         self.game = Game::from_json(s).unwrap();
 
         // If we go from a state with following camera to one with locked, this must be reset.

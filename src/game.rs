@@ -5,8 +5,7 @@ use serde_json::{Result, Value, Deserializer};
 use crate::asteroid::*;
 use crate::broadcast::*;
 use crate::camera::*;
-use crate::physics::*;
-use crate::shape::*;
+use crate::physics::Point;
 use crate::ship::*;
 use crate::storage::*;
 use crate::spawner::*;
@@ -91,7 +90,7 @@ impl Game {
 
         self.broadcast.update(self.tick);
         self.broadcast.set_pressed(pressed);
-        self.broadcast.move_cursor(cursor.clone().add(self.camera.get_offset()));
+        self.broadcast.move_cursor(cursor + self.camera.get_offset());
         self.read_messages();
 
         self.spawner.act(&self.broadcast);

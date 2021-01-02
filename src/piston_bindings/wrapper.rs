@@ -19,7 +19,7 @@ use piston::window::WindowSettings;
 use crate::broadcast::*;
 use crate::game::*;
 use crate::piston_bindings::screen::*;
-use crate::shape::*;
+use crate::physics::Point;
 use crate::ship::*;
 use crate::storage::*;
 

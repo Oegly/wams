@@ -1,4 +1,4 @@
-use crate::shape::*;
+use crate::physics::Point;
 
 use std::f64::consts::{PI,FRAC_PI_2,TAU};
 
@@ -144,7 +144,7 @@ impl std::ops::SubAssign for Vector {
 #[cfg(test)]
 mod tests {
     use std::f64::consts::{PI,FRAC_PI_2};
-    use crate::physics::*;
+    use crate::physics::Vector;
 
     const TAU: f64 = PI * 2.0;
 

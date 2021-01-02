@@ -1,4 +1,4 @@
-use crate::shape::*;
+use crate::physics::{Point,Rectangle,Shape};
 
 const RATIO_X: f64 = 0.5;
 const RATIO_Y: f64 = 0.5;

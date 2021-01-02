@@ -6,8 +6,7 @@ use crate::asteroid::*;
 use crate::broadcast::*;
 use crate::camera::*;
 use crate::game::*;
-use crate::physics::*;
-use crate::shape::*;
+use crate::physics::{Point,Vector};
 use crate::ship::*;
 use crate::wasm_bindings::*;
 use crate::wasm_bindings::particle::*;
@@ -93,9 +92,11 @@ impl WasmScreen {
 
         for p in &self.particles {
             self.ctx.set_fill_style(&p.color);
+            self.ctx.set_global_alpha(p.get_alpha());
             self.ctx.begin_path();
             self.ctx.arc(p.x - self.offset.x, p.y - self.offset.y, p.get_size(), 0.0, std::f64::consts::PI * 2.0).unwrap();
             self.ctx.fill();
+            self.ctx.set_global_alpha(1.0);
         }
     }
 

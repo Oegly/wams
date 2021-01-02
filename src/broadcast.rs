@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 use std::cell::RefCell;
 
-use crate::physics::Vector;
-use crate::shape::*;
+use crate::physics::{Point,Vector};
 use crate::ship::*;
 
 pub struct Broadcast {

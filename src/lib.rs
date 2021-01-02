@@ -15,7 +15,6 @@ pub mod camera;
 pub mod game;
 pub mod physics;
 pub mod ship;
-pub mod shape;
 pub mod storage;
 pub mod spawner;
 pub mod broadcast;

@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use crate::asteroid::*;
 use crate::broadcast::*;
-use crate::physics::*;
-use crate::shape::*;
+use crate::physics::{Circle,Point,Segment,Vector};
 use crate::ship::*;
 
 use std::f64::consts::{PI,FRAC_PI_2,TAU};
