@@ -80,3 +80,12 @@ impl std::ops::SubAssign for Point {
         };
     }
 }
+
+use std::fmt;
+
+impl fmt::Display for Point {
+
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+      write!(f, "x: {:.2}, y: {:.2}", self.x, self.y)
+    }
+}

@@ -141,6 +141,17 @@ impl std::ops::SubAssign for Vector {
     }
 }
 
+impl std::ops::Mul<f64> for Vector {
+    type Output = Vector;
+
+    fn mul(self, scalar: f64) -> Self {
+        Self {
+            direction: self.direction,
+            magnitude: self.magnitude * scalar,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::f64::consts::{PI,FRAC_PI_2};

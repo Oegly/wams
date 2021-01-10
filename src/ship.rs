@@ -6,7 +6,7 @@ use crate::broadcast::*;
 use crate::physics::{Circle,Point,Rectangle,Shape,Vector};
 use crate::storage::*;
 
-use std::f64::consts::{PI,FRAC_PI_2,TAU};
+use std::f64::consts::{E,PI,FRAC_PI_2,TAU};
 
 pub const BELL: usize = 0;
 pub const JALAPENO: usize = 1;
@@ -70,12 +70,12 @@ impl Ship {
         self.direction = dy.atan2(dx);
     }
 
-    pub fn thrust(&mut self, m: f64) {
+    pub fn thrust(&mut self, m: f64, time_delta: f64) {
         // Add to the vector. m is a percentage of the maximum force.
         self.vector.add_vector(
             Vector {
                 direction: self.direction,
-                magnitude: self.force.min(self.force * m)
+                magnitude: self.force.min(self.force * m * time_delta)
             });
     }
 
@@ -99,6 +99,8 @@ impl Ship {
             self.vector.get_dx() * time_delta,
             self.vector.get_dy() * time_delta
         );
+
+        println!("{:}", time_delta);
     }
 
     pub fn rotate(&mut self, d: f64) {
@@ -214,7 +216,7 @@ impl Ship {
             match d {
                 Directive::SetDirection(n) => self.direction = *n,
                 Directive::Rotate(n) => self.rotate(*n),
-                Directive::Thrust(n) => self.thrust(*n),
+                Directive::Thrust(n) => self.thrust(*n, time_delta),
                 Directive::Brake => self.brake(time_delta),
                 Directive::Aim(p) => self.aim(*p),
             }

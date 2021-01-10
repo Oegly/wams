@@ -5,7 +5,7 @@ use crate::broadcast::*;
 use crate::physics::{Circle,Point,Segment,Vector};
 use crate::ship::*;
 
-use std::f64::consts::{PI,FRAC_PI_2,TAU};
+use std::f64::consts::{E,PI,FRAC_PI_2,TAU};
 
 pub fn build_brain(category: usize, id: u32) -> Box<dyn Brain> {
     match category {
@@ -68,7 +68,7 @@ impl Brain for BellBrain {
         let pressed: Vec<char> = cast.get_input();
 
         if pressed.contains(&'M') {
-            return vec![Directive::Aim(cast.cursor), Directive::Thrust(1.0 * time_delta)];
+            return vec![Directive::Aim(cast.cursor), Directive::Thrust(1.0)];
         }
         else {
             let mut ret = Vec::<Directive>::new();
@@ -80,7 +80,7 @@ impl Brain for BellBrain {
                 ret.push(Directive::Rotate(TAU * time_delta));
             }
             if pressed.contains(&'T') {
-                ret.push(Directive::Thrust(1.0 * time_delta));
+                ret.push(Directive::Thrust(1.0));
             }
             if pressed.contains(&'B') {
                 ret.push(Directive::Brake);
@@ -119,7 +119,7 @@ impl Brain for JalapenoBrain {
         }
 
         return match self.active {
-            true => vec![Directive::Aim(self.player_position), Directive::Thrust(1.0 * time_delta)],
+            true => vec![Directive::Aim(self.player_position), Directive::Thrust(1.0)],
             false => vec![Directive::Rotate(FRAC_PI_2 * time_delta)],
         }
     }
@@ -143,25 +143,22 @@ impl CayenneBrain {
         }
     }
 
-    pub fn chase(&mut self, time_delta: f64, me: &ShipCache, target: Point) -> Vec<Directive> {
+    pub fn chase(&mut self, time_delta: f64, me: &ShipCache, target: &ShipCache) -> Vec<Directive> {
         // How to get to target (from where we are now)
-        let ideal_path = Vector::from(target - me.get_point());
-        let plan = me.vector + Vector::new(ideal_path.direction, me.force * time_delta);
-        
-        //let mut offset = me.vector - ideal_path;
-        //offset.magnitude *= 2.0;
-        //offset.direction += PI;
+        let ideal = Vector::from(target.get_point() - me.get_point());
 
-        // Would we be closer to the target?
-        if (ideal_path - plan).magnitude < ideal_path.magnitude {
-            return vec![
-                Directive::SetDirection(ideal_path.direction),
-                Directive::Thrust(1.0 * time_delta)
-            ];
-        }
+        // The multiplier is based on trial and error until I found something that seemed to work.
+        // sigmoid(-delta) * 4.0 is not based on any profound insight.
+        let delta = ideal.radian_delta(me.vector.direction).sin();
+        let sinimized = Vector::new(me.vector.direction + FRAC_PI_2 * -delta.signum(), me.vector.magnitude * delta.abs());
+        let multiplier = (1.0 / (1.0 + E.powf(-delta))) * 4.0;
+        let offset =  sinimized * multiplier;
+        let plan = ideal + offset;
 
-        vec![Directive::Brake]
-
+        vec![
+            Directive::SetDirection(plan.direction),
+            Directive::Thrust(1.0)
+        ]
     }
 }
 
@@ -173,7 +170,7 @@ impl Brain for CayenneBrain {
         }
 
         return match self.active {
-            true => self.chase(time_delta, &actors[&self.id], self.player_position),
+            true => self.chase(time_delta, &actors[&self.id], &actors[&cast.player_id.unwrap()]),
             false => vec![Directive::Rotate(FRAC_PI_2 * time_delta)],
         }
     }
@@ -229,7 +226,7 @@ impl Brain for ChickpeaBrain {
         if d.magnitude > 0.0 {
             return vec![
                 Directive::SetDirection(d.direction),
-                Directive::Thrust(1.0 * time_delta)
+                Directive::Thrust(1.0)
             ];
         }
 
