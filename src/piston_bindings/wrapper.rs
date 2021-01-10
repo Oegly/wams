@@ -25,7 +25,7 @@ use crate::storage::*;
 
 const OPENGL_VERSION: glutin_window::OpenGL = OpenGL::V3_2;
 const BG_COLOR: [f32; 4] = [0.9, 0.9, 0.9, 1.0];
-const UPS: u64 = 60;
+const UPS: f64 = 60.0;
 
 struct GameWrapper {
     game: Game,
@@ -56,7 +56,7 @@ impl GameWrapper {
     }
 
     pub fn init(&mut self, window: &mut GlutinWindow) {
-        let mut events = Events::new(EventSettings::new()).ups(UPS);
+        let mut events = Events::new(EventSettings::new()).ups(UPS as u64);
         while let Some(e) = events.next(window) {
             if let Some(r) = e.render_args() {
                 self.render(r);
@@ -87,7 +87,7 @@ impl GameWrapper {
     pub fn update(&mut self, u: &UpdateArgs) -> bool {
         match self.state {
             GameState::Running => {
-                self.game.update(&self.inputs.pressed, self.inputs.cursor)
+                self.game.update(&self.inputs.pressed, self.inputs.cursor, 1.0/UPS)
             },
             GameState::Paused => true,
         }

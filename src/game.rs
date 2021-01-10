@@ -85,7 +85,7 @@ impl Game {
         Ok(Game::new(player, mobs, asteroids, walls, spawner, next, camera_follow))
     }
 
-    pub fn update(&mut self, pressed: &Vec<char>, cursor: Point) -> bool {
+    pub fn update(&mut self, pressed: &Vec<char>, cursor: Point, time_delta: f64) -> bool {
         self.tick += 1;
 
         self.broadcast.update(self.tick);
@@ -99,20 +99,20 @@ impl Game {
         self.cached_actors.clear();
 
         // Cache player
-        self.cached_actors.insert(self.player.get_id(), self.player.get_cache(1.0/UPS as f64));
+        self.cached_actors.insert(self.player.get_id(), self.player.get_cache(time_delta as f64));
 
         // Cache non-player characters
         for mob in self.mobs.iter() {
-            self.cached_actors.insert(mob.get_id(), mob.get_cache(1.0/UPS as f64));
+            self.cached_actors.insert(mob.get_id(), mob.get_cache(time_delta as f64));
         }
 
         self.broadcast.record_actors(&self.cached_actors, Some(self.player.get_id()));
 
         //self.player.add_inputs(self.broadcast.input.to_vec());
-        self.player.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors, &self.asteroids);
+        self.player.act(time_delta as f64, &self.broadcast, &self.cached_actors, &self.asteroids);
 
         for mob in self.mobs.iter_mut() {
-            mob.act(1.0/UPS as f64, &self.broadcast, &self.cached_actors, &self.asteroids);
+            mob.act(time_delta as f64, &self.broadcast, &self.cached_actors, &self.asteroids);
         }
 
         match self.victory {
@@ -153,6 +153,10 @@ impl Game {
         self.cached_actors[&self.player.get_id()].health
     }
 
+    pub fn get_player_speed(&self) -> f64 {
+        self.cached_actors[&self.player.get_id()].vector.magnitude.abs()
+    }
+
     fn create_ship(&mut self, ship: ShipBuilder) {
         self.ship_count += 1;
         
@@ -190,7 +194,8 @@ impl Game {
 
         // How many ships are left?
         let alive = self.mobs.iter()
-        .filter(|m| m.get_cache(1.0 / UPS as f64).health > 0.0)
+        // We do not care about the trajectory bounds, so time_delta can be arbitrary
+        .filter(|m| m.get_cache(1.0/60.0 as f64).health > 0.0)
         .count();
 
         if alive == 0 {

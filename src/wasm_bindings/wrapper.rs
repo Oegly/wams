@@ -54,7 +54,7 @@ impl GameWrapper {
     pub fn update(&mut self) -> bool {
         match self.state {
             GameState::Running => {
-                self.game.update(&self.inputs.pressed, self.inputs.cursor)
+                self.game.update(&self.inputs.pressed, self.inputs.cursor, 1.0/60.0)
             },
             GameState::Paused => true,
         }
@@ -111,7 +111,8 @@ impl GameWrapper {
         self.screen.draw_widget(Widget::status(
             self.game.get_score(),
             self.game.get_player_health().ceil() as u32,
-            time.floor() as u32 / 1000
+            self.game.get_player_speed(),
+            time.floor() as u32 / 1000,
         ));
     }
 
