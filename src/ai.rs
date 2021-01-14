@@ -146,15 +146,32 @@ impl CayenneBrain {
     pub fn chase(&mut self, time_delta: f64, me: &ShipCache, target: &ShipCache) -> Vec<Directive> {
         // How to get to target (from where we are now)
         let ideal = Vector::from(target.get_point() - me.get_point());
+        
+        // Offsetting the sine is important to avoid situations like mobs orbiting the target
+        let delta = ideal.radian_delta(me.vector.direction);
+        let sinimized = Vector::new(me.vector.direction - FRAC_PI_2, me.vector.magnitude * delta.sin());
+        
+        // Don't focus too much on the offset, the priority should be chasing the target
+        let multiplier = 1.0 / (1.0 + E.powf(-delta.abs()));
+        let plan = Vector::new(ideal.direction, delta.cos().abs()) * multiplier + sinimized;
 
-        // The multiplier is based on trial and error until I found something that seemed to work.
-        // sigmoid(-delta) * 4.0 is not based on any profound insight.
-        let delta = ideal.radian_delta(me.vector.direction).sin();
-        let sinimized = Vector::new(me.vector.direction + FRAC_PI_2 * -delta.signum(), me.vector.magnitude * delta.abs());
-        let multiplier = (1.0 / (1.0 + E.powf(-delta))) * 4.0;
-        let offset =  sinimized * multiplier;
-        let plan = ideal + offset;
+        vec![
+            Directive::SetDirection(plan.direction),
+            Directive::Thrust(1.0)
+        ]
+    }
 
+    fn manhattan_chase(&mut self, time_delta: f64, me: &ShipCache, target: &ShipCache) -> Vec<Directive> {
+        let mp = me.get_point();
+        let tp = target.get_point();
+        let distance = tp - mp;
+
+        let x_comp = distance.x - me.vector.get_dx();
+        let y_comp = distance.y - me.vector.get_dy();
+
+        let plan = Vector::from_deltas(x_comp, y_comp);
+
+        println!("yolo");
         vec![
             Directive::SetDirection(plan.direction),
             Directive::Thrust(1.0)
