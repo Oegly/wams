@@ -7,16 +7,17 @@ pub struct Widget {
 }
 
 impl Widget {
-    pub fn status(score: u32, health: u32, time: u32, ) -> Widget {
+    pub fn status(score: u32, health: u32, speed: f64, time: u32) -> Widget {
         Widget {
             x: 10.0,
             y: 10.0,
             width: 150.0,
-            height: 90.0,
+            height: 120.0,
             text: vec![
                 Paragraph {x: 12.0, y: 24.0, body: format!("Score: {:>6}", score)},
                 Paragraph {x: 12.0, y: 48.0, body: format!("Health: {:>5}", health)},
-                Paragraph {x: 12.0, y: 72.0, body: format!("Time: {:>4}:{:02}", time / 60, time % 60)},
+                Paragraph {x: 12.0, y: 72.0, body: format!("Speed: {:>6}", speed.round())},
+                Paragraph {x: 12.0, y: 96.0, body: format!("Time: {:>4}:{:02}", time / 60, time % 60)},
             ],
         }
     }

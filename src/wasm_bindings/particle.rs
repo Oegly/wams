@@ -38,17 +38,17 @@ impl Particle {
     }
 
     pub fn get_alpha(&self) -> f64 {
-        1.0 //(self.lifetime - self.elapsed) / self.lifetime
+        ((self.lifetime - self.elapsed) / self.lifetime) / 2.0
     }
 
     pub fn new_trail(x: f64, y: f64, mut vector: Vector) -> Particle {
         // Very cheap RNG
-        let r = (x + y + vector.magnitude).sin() % 2.0 - 1.0;
+        let r = (x + y / vector.magnitude).sin() % 0.8 - 0.4;
 
         vector.rotate(FRAC_PI_2 + r);
-        vector.magnitude *= 0.6;
+        vector.magnitude *= 0.2;
 
-        Particle::new(x, y, vector, 2.0, 3.0, JsValue::from("#eeee66"))
+        Particle::new(x, y, vector, 3.0, 1.8, JsValue::from("#eeee66"))
     }
 
     pub fn new_collision(x: f64, y: f64, m: f64, color: &str) -> Vec<Particle> {

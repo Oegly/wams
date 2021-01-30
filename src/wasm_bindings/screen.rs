@@ -6,7 +6,7 @@ use crate::asteroid::*;
 use crate::broadcast::*;
 use crate::camera::*;
 use crate::game::*;
-use crate::physics::{Point,Vector};
+use crate::physics::{Point,Rectangle,Shape,Vector};
 use crate::ship::*;
 use crate::wasm_bindings::*;
 use crate::wasm_bindings::particle::*;
@@ -47,6 +47,7 @@ pub struct WasmScreen {
     particles: Vec<Particle>,
     pub size: Point,
     pub offset: Point,
+    pub rect: Rectangle,
 }
 
 impl WasmScreen {
@@ -58,14 +59,23 @@ impl WasmScreen {
             size: Point::new(canvas.width().into(), canvas.height().into()),
             offset: Point::new(0.0, 0.0),
             particles: Vec::new(),
+            rect: Rectangle::new(0.0, 0.0, canvas.width().into(), canvas.height().into()),
         }
     }
 
     pub fn resize(&mut self) {
+        let canvas = self.ctx.canvas().unwrap();
+
         self.size = Point::new(
-            self.ctx.canvas().unwrap().width().into(),
-            self.ctx.canvas().unwrap().width().into()
+            canvas.width().into(),
+            canvas.width().into()
         );
+        self.rect = Rectangle::new(
+            0.0, 0.0,
+            canvas.width().into(),
+            canvas.height().into()
+        );
+
     }
 
     pub fn clear(&self) {
@@ -83,6 +93,50 @@ impl WasmScreen {
         }
     }
     
+    pub fn draw_offscreen_ship(&self, ship: &ShipCache) {
+        let colors = get_palette(ship.category as usize);
+
+        // Distance from border
+        let b = 30.0;
+        let x = match ship.circle.x < self.offset.x + b {
+            true => f64::max(ship.circle.x - self.offset.x, b),
+            false => f64::min(ship.circle.x - self.offset.x, self.rect.width - b)
+        };
+        let y = match ship.circle.y < self.offset.y + b {
+            true => f64::max(ship.circle.y - self.offset.y, b),
+            false => f64::min(ship.circle.y - self.offset.y, self.rect.height - b)
+        };
+
+        let center = Point::new(
+            self.offset.x + self.rect.width / 2.0,
+            self.offset.y + self.rect.height / 2.0
+        );
+        let v = Vector::from(ship.get_point() - (Point::new(x, y) + self.offset));
+        let d = v.direction;
+
+        //let d = v.direction;
+        //let x = self.rect.width / 2.0 + d.cos() * 359.0;
+        //let y = self.rect.height / 2.0 + d.sin() * 359.0;
+        let r = 10.0;
+        let clamped = r * 4.0 / (1.0 + std::f64::consts::E.powf(-(v.magnitude/(self.rect.width*4.0))));
+        
+        self.ctx.set_fill_style(&JsValue::from("#999"));
+        self.ctx.begin_path();
+        self.ctx.arc(x, y, r, 0.0, std::f64::consts::PI * 2.0).unwrap();
+        self.ctx.fill();
+
+        self.ctx.begin_path();
+        self.ctx.move_to(x + (d + FRAC_PI_2).cos() * r * 0.8, y + (d + FRAC_PI_2).sin() * r * 0.8);
+        self.ctx.line_to(x + d.cos() * clamped, y + d.sin() * clamped);
+        self.ctx.line_to(x + (d - FRAC_PI_2).cos() * r * 0.8, y + (d - FRAC_PI_2).sin() * r * 0.8);
+        self.ctx.fill();
+
+        self.ctx.set_fill_style(&JsValue::from(&colors[0]));
+        self.ctx.begin_path();
+        self.ctx.arc(x, y, r * 0.8, 0.0, std::f64::consts::PI * 2.0).unwrap();
+        self.ctx.fill();
+    }
+
     pub fn draw_particles(&mut self) {
         for p in self.particles.iter_mut() {
             p.tick(1.0/60.0);
@@ -113,11 +167,77 @@ impl WasmScreen {
                 _ => ()
             });
     }
+
+
+    fn draw_euclidean_vectors(&self, ship: &ShipCache) {
+        let [mut x, mut y, r] = [ship.circle.x, ship.circle.y, ship.circle.r];
+        x -= self.offset.x;
+        y -= self.offset.y;
+
+        self.ctx.set_stroke_style(&JsValue::from(&"#000000".to_string()));
+
+        let plan = Vector::new(ship.direction, ship.vector.magnitude);
+        let celta = plan.radian_delta(ship.vector.direction).cos();
+        let coffset = Vector::new(ship.direction, ship.vector.magnitude * celta);
+
+        self.ctx.begin_path();
+        self.ctx.move_to(x, y);
+        self.ctx.line_to(x + coffset.get_dx(), y + coffset.get_dy());
+        self.ctx.stroke();
+
+        self.ctx.begin_path();
+        self.ctx.move_to(x, y);
+        self.ctx.line_to(x - coffset.get_dx(), y - coffset.get_dy());
+        self.ctx.stroke();
+
+        let delta = plan.radian_delta(ship.vector.direction).sin();
+        let offset = Vector::new(ship.direction + FRAC_PI_2 * delta.signum(), ship.vector.magnitude * delta);
+
+        self.ctx.set_stroke_style(&JsValue::from(&"#ee2222".to_string()));
+
+        self.ctx.begin_path();
+        self.ctx.move_to(x, y);
+        self.ctx.line_to(x + offset.get_dx(), y + offset.get_dy());
+        self.ctx.stroke();
+
+        self.ctx.set_stroke_style(&JsValue::from(&"#2222ee".to_string()));
+        let v = Vector::new(offset.direction + PI, offset.magnitude);
+        self.ctx.begin_path();
+        self.ctx.move_to(x, y);
+        self.ctx.line_to(x + v.get_dx(), y + v.get_dy());
+        self.ctx.stroke();
+    }
+
+    fn draw_manhattan_vectors(&self, ship: &ShipCache) {
+        let [mut x, mut y, r] = [ship.circle.x, ship.circle.y, ship.circle.r];
+        x -= self.offset.x;
+        y -= self.offset.y;
+
+        self.ctx.begin_path();
+        self.ctx.move_to(x, y);
+        self.ctx.line_to(x + ship.vector.get_dx(), y);
+        self.ctx.stroke();
+
+        self.ctx.begin_path();
+        self.ctx.move_to(x, y);
+        self.ctx.line_to(x, y + ship.vector.get_dy());
+        self.ctx.stroke();
+    }
 }
 
 impl Screen for WasmScreen {
     fn draw_ship(&mut self, ship: &ShipCache, time_delta: f64, tick: u64) {
         let [mut x, mut y, r] = [ship.circle.x, ship.circle.y, ship.circle.r];
+        let colors = get_palette(ship.category as usize);
+        let alpha = get_alpha(ship.health, ship.category);
+
+        let rect = Rectangle::new(self.offset.x, self.offset.y,
+            self.size.x, self.size.y);
+
+        if !self.rect.check_collision_shape(&ship.circle) {
+            self.draw_offscreen_ship(ship);
+            return ();
+        }
 
         // Trail
         let thrusting = ship.actions.iter().any(|d| match d {
@@ -125,7 +245,8 @@ impl Screen for WasmScreen {
             _ => false,  
         });
 
-        if tick % 6 == 0 && thrusting {
+
+        if tick % 1 == 0 && thrusting {
             let v = Vector::new(ship.direction + PI, r * 1.4);
             self.particles.push(
                 Particle::new_trail(x + v.get_dx(), y + v.get_dy(), ship.vector.clone()));
@@ -133,9 +254,6 @@ impl Screen for WasmScreen {
 
         x -= self.offset.x;
         y -= self.offset.y;
-
-        let colors = get_palette(ship.category as usize);
-        let alpha = get_alpha(ship.health, ship.category);
 
         self.ctx.translate(x, y);
         self.ctx.rotate(ship.direction + FRAC_PI_2);
@@ -165,14 +283,9 @@ impl Screen for WasmScreen {
         self.ctx.arc(x, y, r, 0.0, std::f64::consts::PI * 2.0).unwrap();
         self.ctx.fill();
 
-        /*self.ctx.set_global_alpha(0.2);
-
-        self.ctx.set_fill_style(&JsValue::from(&colors[0]));
-        self.ctx.begin_path();
-        self.ctx.arc(x, y, ship.vector.magnitude, 0.0, std::f64::consts::PI * 2.0).unwrap();
-        self.ctx.fill();
-        */
         self.ctx.set_global_alpha(1.0);
+
+        //self.draw_euclidean_vectors(ship);
     }
 
     fn draw_asteroid(&self, asteroid: &Asteroid) {
@@ -189,6 +302,8 @@ impl Screen for WasmScreen {
 
     fn set_offset(&mut self, point: Point) {
         self.offset = point;
+        self.rect.x = point.x;
+        self.rect.y = point.y;
         //self.draw_background();
     }
 
